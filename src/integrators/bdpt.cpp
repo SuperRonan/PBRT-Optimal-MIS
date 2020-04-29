@@ -198,11 +198,12 @@ int RandomWalk(const Scene &scene, RayDifferential ray, Sampler &sampler,
             if (f.IsBlack() || pdfFwd == 0.f) break;
             beta *= f * AbsDot(wi, isect.shading.n) / pdfFwd;
             VLOG(2) << "Random walk beta now " << beta;
-            pdfRev = isect.bsdf->Pdf(wi, wo, BSDF_ALL);
-            if (type & BSDF_SPECULAR) {
-                vertex.delta = true;
-                pdfRev = pdfFwd = 0;
-            }
+			if (type & BSDF_SPECULAR) {
+				vertex.delta = true;
+				pdfRev = pdfFwd; // This heavily assumes that the specular pdf is symmetric
+			}
+			else
+				pdfRev = isect.bsdf->Pdf(wi, wo, BSDF_ALL);
             beta *= CorrectShadingNormal(isect, wo, wi, mode);
             VLOG(2) << "Random walk beta after shading normal correction " << beta;
             ray = isect.SpawnRay(wi);
@@ -231,8 +232,6 @@ Float MISWeight(const Scene &scene, Vertex *lightVertices,
                 const std::unordered_map<const Light *, size_t> &lightToIndex) {
     if (s + t == 2) return 1;
     Float sumRi = 0;
-    // Define helper function _remap0_ that deals with Dirac delta functions
-    auto remap0 = [](Float f) -> Float { return f != 0 ? f : 1; };
 
     // Temporarily update vertex properties for current strategy
 
@@ -277,7 +276,7 @@ Float MISWeight(const Scene &scene, Vertex *lightVertices,
     Float ri = 1;
     for (int i = t - 1; i > 0; --i) {
         ri *=
-            remap0(cameraVertices[i].pdfRev) / remap0(cameraVertices[i].pdfFwd);
+            cameraVertices[i].pdfRev / cameraVertices[i].pdfFwd;
         if (!cameraVertices[i].delta && !cameraVertices[i - 1].delta)
             sumRi += ri;
     }
@@ -285,7 +284,7 @@ Float MISWeight(const Scene &scene, Vertex *lightVertices,
     // Consider hypothetical connection strategies along the light subpath
     ri = 1;
     for (int i = s - 1; i >= 0; --i) {
-        ri *= remap0(lightVertices[i].pdfRev) / remap0(lightVertices[i].pdfFwd);
+        ri *= lightVertices[i].pdfRev / lightVertices[i].pdfFwd;
         bool deltaLightvertex = i > 0 ? lightVertices[i - 1].delta
                                       : lightVertices[0].IsDeltaLight();
         if (!lightVertices[i].delta && !deltaLightvertex) sumRi += ri;
