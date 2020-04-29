@@ -78,10 +78,10 @@ Spectrum ProjectionLight::Sample_Li(const Interaction &ref, const Point2f &u,
                                     VisibilityTester *vis) const {
     ProfilePhase _(Prof::LightSample);
     *wi = Normalize(pLight - ref.p);
-    *pdf = 1;
+    *pdf = DistanceSquared(pLight, ref.p);
     *vis =
         VisibilityTester(ref, Interaction(pLight, ref.time, mediumInterface));
-    return I * Projection(-*wi) / DistanceSquared(pLight, ref.p);
+    return I * Projection(-*wi);
 }
 
 Spectrum ProjectionLight::Projection(const Vector3f &w) const {

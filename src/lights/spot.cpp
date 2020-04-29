@@ -55,10 +55,10 @@ Spectrum SpotLight::Sample_Li(const Interaction &ref, const Point2f &u,
                               VisibilityTester *vis) const {
     ProfilePhase _(Prof::LightSample);
     *wi = Normalize(pLight - ref.p);
-    *pdf = 1.f;
+    *pdf = DistanceSquared(pLight, ref.p);
     *vis =
         VisibilityTester(ref, Interaction(pLight, ref.time, mediumInterface));
-    return I * Falloff(-*wi) / DistanceSquared(pLight, ref.p);
+	return I * Falloff(-*wi);
 }
 
 Float SpotLight::Falloff(const Vector3f &w) const {

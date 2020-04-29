@@ -46,10 +46,10 @@ Spectrum GonioPhotometricLight::Sample_Li(const Interaction &ref,
                                           VisibilityTester *vis) const {
     ProfilePhase _(Prof::LightSample);
     *wi = Normalize(pLight - ref.p);
-    *pdf = 1.f;
+    *pdf = DistanceSquared(pLight, ref.p);
     *vis =
         VisibilityTester(ref, Interaction(pLight, ref.time, mediumInterface));
-    return I * Scale(-*wi) / DistanceSquared(pLight, ref.p);
+    return I * Scale(-*wi);
 }
 
 Spectrum GonioPhotometricLight::Power() const {
