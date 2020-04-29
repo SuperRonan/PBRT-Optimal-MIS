@@ -422,6 +422,50 @@ struct Vertex {
             return pdfPos * pdfChoice;
         }
     }
+	Float PdfResampledLight(const Scene& scene, const Vertex& ref,
+		const Distribution1D& lightDistr,
+		const std::unordered_map<const Light*, size_t>&
+		lightToDistrIndex) const {
+		Vector3f w = ref.p() - p();
+		if (w.LengthSquared() == 0) return 0.;
+		w = Normalize(w);
+		if (IsInfiniteLight()) {
+			if (IsDeltaLight())
+			{
+				const Light* light = ei.light;
+				size_t index = lightToDistrIndex.find(light)->second;
+				return lightDistr.DiscretePDF(index);
+			}
+			// Return solid angle density for infinite light sources
+			return InfiniteLightDensity(scene, lightDistr, lightToDistrIndex,
+				w);
+		}
+		else {
+			// Return solid angle density for non-infinite light sources
+			Float pdfPos, pdfChoice = 0;
+
+			// Get pointer _light_ to the light source at the vertex
+			CHECK(IsLight());
+			const Light* light = type == VertexType::Light
+				? ei.light
+				: si.primitive->GetAreaLight();
+			CHECK(light != nullptr);
+
+			// Compute the discrete probability of sampling _light_, _pdfChoice_
+			CHECK(lightToDistrIndex.find(light) != lightToDistrIndex.end());
+			size_t index = lightToDistrIndex.find(light)->second;
+			pdfChoice = lightDistr.DiscretePDF(index);
+
+			if (light->flags & (int)LightFlags::DeltaPosition)
+				pdfPos = 1;
+			else
+			{
+				Float pdfPos_solid_angle = light->Pdf_Li(ref.GetInteraction(), -w);
+				pdfPos = ref.ConvertDensity(pdfPos_solid_angle, *this);
+			}
+			return pdfPos * pdfChoice;
+		}
+	}
 };
 
 extern int GenerateCameraSubpath(const Scene &scene, Sampler &sampler,

@@ -229,7 +229,7 @@ Spectrum G(const Scene &scene, Sampler &sampler, const Vertex &v0,
 Float MISWeight(const Scene &scene, Vertex *lightVertices,
                 Vertex *cameraVertices, Vertex &sampled, int s, int t,
                 const Distribution1D &lightPdf,
-                const std::unordered_map<const Light *, size_t> &lightToIndex) {
+                const std::unordered_map<const Light *, size_t> &lightToIndex, Float s1Pdf) {
     if (s + t == 2) return 1;
     Float sumRi = 0;
 
@@ -277,8 +277,10 @@ Float MISWeight(const Scene &scene, Vertex *lightVertices,
     for (int i = t - 1; i > 0; --i) {
         ri *=
             cameraVertices[i].pdfRev / cameraVertices[i].pdfFwd;
+		Float actualRi = (s == 0 && i == t - 1) ?
+			ri * s1Pdf / cameraVertices[i].pdfRev : ri;
         if (!cameraVertices[i].delta && !cameraVertices[i - 1].delta)
-            sumRi += ri;
+            sumRi += actualRi;
     }
 
     // Consider hypothetical connection strategies along the light subpath
@@ -287,9 +289,12 @@ Float MISWeight(const Scene &scene, Vertex *lightVertices,
         ri *= lightVertices[i].pdfRev / lightVertices[i].pdfFwd;
         bool deltaLightvertex = i > 0 ? lightVertices[i - 1].delta
                                       : lightVertices[0].IsDeltaLight();
-        if (!lightVertices[i].delta && !deltaLightvertex) sumRi += ri;
+		Float actualRi = (i == 1) ?
+			ri * s1Pdf / lightVertices[0].pdfFwd : ri;
+        if (!lightVertices[i].delta && !deltaLightvertex) sumRi += actualRi;
     }
-    return 1 / (1 + sumRi);
+	Float actualRi = (s == 1) ? s1Pdf / lightVertices[0].pdfFwd : 1.0;
+    return actualRi / (actualRi + sumRi);
 }
 
 // BDPT Method Definitions
@@ -452,12 +457,16 @@ Spectrum ConnectBDPT(
     if (t > 1 && s != 0 && cameraVertices[t - 1].type == VertexType::Light)
         return Spectrum(0.f);
 
+	Float s1Pdf;
     // Perform connection and write contribution to _L_
     Vertex sampled;
     if (s == 0) {
         // Interpret the camera subpath as a complete path
         const Vertex &pt = cameraVertices[t - 1];
-        if (pt.IsLight()) L = pt.Le(scene, cameraVertices[t - 2]) * pt.beta;
+		if (pt.IsLight()) {
+			L = pt.Le(scene, cameraVertices[t - 2]) * pt.beta;
+			s1Pdf = cameraVertices[t - 1].PdfResampledLight(scene, cameraVertices[t - 2], lightDistr, lightToIndex);
+		}
         DCHECK(!L.HasNaNs());
     } else if (t == 1) {
         // Sample a point on the camera and connect it to the light subpath
@@ -486,18 +495,20 @@ Spectrum ConnectBDPT(
             Float lightPdf;
             VisibilityTester vis;
             Vector3f wi;
-            Float pdf;
+            Float pdfSolidAngle;
             int lightNum =
                 lightDistr.SampleDiscrete(sampler.Get1D(), &lightPdf);
             const std::shared_ptr<Light> &light = scene.lights[lightNum];
             Spectrum lightWeight = light->Sample_Li(
-                pt.GetInteraction(), sampler.Get2D(), &wi, &pdf, &vis);
-            if (pdf > 0 && !lightWeight.IsBlack()) {
+                pt.GetInteraction(), sampler.Get2D(), &wi, &pdfSolidAngle, &vis);
+            if (pdfSolidAngle > 0 && !lightWeight.IsBlack()) {
                 EndpointInteraction ei(vis.P1(), light.get());
                 sampled =
-                    Vertex::CreateLight(ei, lightWeight / (pdf * lightPdf), 0);
+                    Vertex::CreateLight(ei, lightWeight / (pdfSolidAngle * lightPdf), 0);
                 sampled.pdfFwd =
                     sampled.PdfLightOrigin(scene, pt, lightDistr, lightToIndex);
+				Float pdfArea = pt.ConvertDensity(pdfSolidAngle, sampled);
+				s1Pdf = pdfArea * lightPdf;
                 L = pt.beta * pt.f(sampled, TransportMode::Radiance) * sampled.beta;
                 if (pt.IsOnSurface()) L *= AbsDot(wi, pt.ns());
                 // Only check visibility if the path would carry radiance.
@@ -516,6 +527,8 @@ Spectrum ConnectBDPT(
             if (!L.IsBlack()) L *= G(scene, sampler, qs, pt);
         }
     }
+	if (s >= 2)
+		s1Pdf = lightVertices[0].PdfResampledLight(scene, lightVertices[1], lightDistr, lightToIndex);
 
     ++totalPaths;
     if (L.IsBlack()) ++zeroRadiancePaths;
@@ -524,7 +537,7 @@ Spectrum ConnectBDPT(
     // Compute MIS weight for connection strategy
     Float misWeight =
         L.IsBlack() ? 0.f : MISWeight(scene, lightVertices, cameraVertices,
-                                      sampled, s, t, lightDistr, lightToIndex);
+                                      sampled, s, t, lightDistr, lightToIndex, s1Pdf);
     VLOG(2) << "MIS weight for (s,t) = (" << s << ", " << t << ") connection: "
             << misWeight;
     DCHECK(!std::isnan(misWeight));
