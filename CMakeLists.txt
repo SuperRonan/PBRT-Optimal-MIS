@@ -364,6 +364,13 @@ SET_PROPERTY(TARGET Ptex_static ptxinfo halftest ftest rtest wtest PROPERTY FOLD
 INCLUDE_DIRECTORIES ( src/ext/ptex/src/ptex )
 
 ###########################################################################
+# OptiMIS (header-only library)
+# This is not the best way to do it, but it should work for now
+INCLUDE_DIRECTORIES( src/ext/Optimal-MIS/src )
+# OptiMIS needs Eigen (header-only library)
+INCLUDE_DIRECTORIES ( src/ext/Optimal-MIS/ext/Eigen )
+
+###########################################################################
 # On to pbrt...
 
 SET ( PBRT_CORE_SOURCE
