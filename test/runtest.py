@@ -1,24 +1,8 @@
 import subprocess
-import re
 from colorama import Fore
 from colorama import Style
 import os
-
-# generates the string with the selected integrator
-def set_integrator(scene, integrator_str):
-	start = '##INTEGRATOR-DEF-START'
-	end = '##INTEGRATOR-DEF-END'
-	replacement = integrator_str
-	match = re.match(r'(.+%s\s*).+?(\s*%s.+)' % (start, end), scene, re.DOTALL)
-	return match.group(1) + replacement + match.group(2)
-
-def set_number_of_samples(scene, n):
-	start = '##SAMPLER-DEF-START'
-	end = '##SAMPLER-DEF-END'
-	replacement = 'Sampler "random" "integer pixelsamples" %d' % (n)
-	match = re.match(r'(.+%s\s*).+?(\s*%s.+)' % (start, end), scene, re.DOTALL)
-	return match.group(1) + replacement + match.group(2)
-
+from helper import *
 
 
 pbrt_exe = '../build/Release/pbrt.exe'
@@ -67,16 +51,10 @@ scenes = [
 # Select your integrator
 # options: (name, option)
 exec_filters = [
-	('path', ''),                  # path tracer
-	#("light", ''),             # light tracer (to reimplement)
-	('bdpt', ''),	# bdpt (vanilla)
+	('path', ''),			 # path tracer
+	#("light", ''),  		# light tracer (to reimplement)
+	('bdpt', ''),	 		 # bdpt (vanilla)
 ]
-
-def filter_name(options):
-    res = options[0]
-    if(options[1] == 'no'):
-        res = res + '-nolt'
-    return res
 
 
 # Select your min and max lengths 
@@ -144,13 +122,6 @@ for mm in min_max:
 	min_depth = min_len-2
 	max_opti_depth = mm[2]-2 if len(mm) == 3 else None
 
-    # add additional integrator parameters etc here
-	def integrator_string(integrator_name, min_depth, max_depth, LT, max_opti_depth):
-		return 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ]' % (integrator_name, max_depth, min_depth)
-
-	def integrator_str(options, min_depth, max_depth, max_opti_depth):
-		return integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth)
-
 	for number_of_samples in numbers_of_samples:  
 		print(number_of_samples, " samples")  
 		for scene_info in scenes:
@@ -158,32 +129,26 @@ for mm in min_max:
 			sub_folder = scene_info[1] + "_s%d_L%d_l%d/" % (number_of_samples, max_len, min_len)
 
 			scene_path = scene_info[0]  
-			with open(scene_path, 'r') as f:
-				scene = f.read()
+			
+			pbrt_scene = PBRTSceneFile(scene_path)
 
 			for exec_filter in exec_filters:
 				print(exec_filter[0])
 
-				integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
-
-				sc = set_integrator(scene, integrator)
-				sc = set_number_of_samples(sc, number_of_samples)
+				pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
+				pbrt_scene.sampler = sampler_str(number_of_samples)
 				
-				# We still keep this one for debugging purpose
-				with open('scene.pbrt', 'w') as f:
-					f.write(sc)
-				# We need to do it like that for pbrt files that require to open other files in the same folder
-				tmp_scene_path = scene_path[0: len(scene_path)-5] + 'Script.pbrt'
+				pbrt_scene.makeTmp()
 
-				with open(tmp_scene_path, 'w') as f:
-					f.write(sc)
 				name = filter_name(exec_filter)
 				imgname = name + '.exr'
 				filenames.append(imgname)
-				command = [pbrt_exe, tmp_scene_path, '--outfile', result_folder + sub_folder + imgname, '--nthreads', str(num_threads)]
-				if not os.path.exists(result_folder + sub_folder):
-					os.makedirs(result_folder + sub_folder)
 
+				if not os.path.exists(result_folder + sub_folder):
+					os.makedirs(result_folder + sub_folder)				
+				
+				command = [pbrt_exe, pbrt_scene.tmp_filename, '--outfile', result_folder + sub_folder + imgname, '--nthreads', str(num_threads)]
+				
 				res = subprocess.call(command)
 				results.append([sub_folder+imgname, res])
 
@@ -194,7 +159,8 @@ for mm in min_max:
 					passed = passed + 1
 				else:
 					print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
-				os.remove(tmp_scene_path)
+			
+			pbrt_scene.finish()
 
 
 for res in results:
