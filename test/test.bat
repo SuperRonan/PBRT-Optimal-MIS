@@ -1,0 +1,2 @@
+python runtest.py
+pause

@@ -1,0 +1,58 @@
+# straight at the ground
+LookAt 0 0 0.1  # eye
+       0 0 0  # look at point
+       0 1 0  # up vector
+Camera "perspective" "float fov" 170
+
+##SAMPLER-DEF-START
+
+Sampler "random" "integer pixelsamples" 16
+
+##SAMPLER-DEF-END
+
+##INTEGRATOR-DEF-START
+
+Integrator "path" "integer maxdepth" [1]
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "no"
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "power" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "power" "string lighttracer" "no"
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "balance" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "balance" "string lighttracer" "no"
+
+##INTEGRATOR-DEF-END
+
+#PixelFilter "triangle" "float xwidth" [ 1.000000 ] "float ywidth" [ 1.000000 ]
+
+Film "image" "string filename" "simple-area.exr"
+     "integer xresolution" [400] "integer yresolution" [400]
+
+WorldBegin
+
+AttributeBegin
+  Material "matte" "rgb Kd" [1 1 1]
+  Translate 0 0 -0.1
+  Shape "trianglemesh"
+      "integer indices" [0 1 2 0 2 3]
+      "point P" [ -2 -2 0   2 -2 0   2 2 0   -2 2 0 ]
+      "float st" [ 0 0   1 0    1 1   0 1 ]
+AttributeEnd
+
+AttributeBegin
+  AreaLightSource "diffuse" "rgb L" [ 1 1 0 ]
+  Material "matte" "rgb Kd" [1.0 0.5 0.0]   
+  Translate 0 0 0.2
+  Shape "trianglemesh"
+      "integer indices" [0 2 1 0 3 2]
+      "point P" [ -1 -1 0   1 -1 0   1 1 0   -1 1 0 ]
+AttributeEnd
+
+MakeNamedMaterial "TheDarkestMaterialEver" "string type" [ "matte" ] "rgb Kd" [ 0.1000 0.1000 0.1000 ]
+NamedMaterial "TheDarkestMaterialEver"
+Shape "sphere"
+"float radius" [3.000000]
+
+WorldEnd

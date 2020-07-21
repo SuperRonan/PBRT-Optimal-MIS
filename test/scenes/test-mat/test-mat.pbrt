@@ -1,0 +1,145 @@
+
+##INTEGRATOR-DEF-START
+Integrator "path" "integer maxdepth" [ 1 ] 
+##INTEGRATOR-DEF-END
+
+##SAMPLER-DEF-START
+Sampler "random" "integer pixelsamples" 16
+##SAMPLER-DEF-END
+
+Film "image" "integer xresolution" [ 1024 ] "integer yresolution" [ 1024 ] "string filename" [ "cornell-box.png" ] 
+
+Transform [ 1 0 0 0
+			0 1 0 0 
+			0 0 1 0 
+			0 0 0 1 ]
+
+LookAt 0 1 0.9  # eye
+	   0 1 0  # look at point
+	   0 1 0  # up vector
+	   
+Camera "perspective" "float fov" 110
+
+
+WorldBegin
+	
+	MakeNamedMaterial "white" "string type" [ "matte" ] "rgb Kd" [ 1 1 1 ]
+	MakeNamedMaterial "glossy" "string type" [ "plastic" ] "color Kd" [0.1 0.5 0.1] "color Ks" [0.5 0.75 0.5]
+	#MakeNamedMaterial "subsurface" "string type" [ "subsurface" ] "rgb Kr" [ 1 1 1 ] "rgb Kt" [ 1 1 1 ]
+	MakeNamedMaterial "uber" 
+			"float roughness" [ 0.25 ] 
+			#"float index" [ 1 ] 
+			"string type" [ "uber" ] 
+			"rgb Kd" [ 0.75 0.5 0.5 ] 
+			"rgb Ks" [ 0 0 0.75 ] 
+			"rgb Kr" [ 0.75 0.25 0.25 ] 
+			"rgb Kt" [ 0.5 0.5 0.5 ]
+			#"rgb opacity" [ 1 1 1 ] 
+
+	MakeNamedMaterial "glass" "string type" [ "glass" ] "rgb Kr" [ 1 1 1 ] "rgb Kt" [ 1 1 1 ]
+	MakeNamedMaterial "porcelaine" 
+	  "string type" "fourier" "string bsdffile" "bsdfs/ceramic.bsdf"
+	MakeNamedMaterial "metal" 
+		"spectrum eta" "spds/Ag.eta.spd"
+		"spectrum k" "spds/Ag.k.spd"
+		"float roughness" [0.001]
+		"string type" ["metal"]
+	Texture "wood" "color" "imagemap" "string filename" "textures/WoodFine0016_L.png"
+	MakeNamedMaterial "wood"
+			"float roughness" [ 0.003 ] 
+			"string type" [ "substrate" ] 
+			"texture Kd" "wood"
+			"rgb Ks" [ 0.2 0.2 0.2 ]
+
+
+# Sphere
+AttributeBegin
+	NamedMaterial "white"
+	TransformBegin
+		Translate 1 1 0
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+AttributeBegin
+	NamedMaterial "glossy"
+	TransformBegin
+		Translate 0.5 1 0
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+AttributeBegin
+	NamedMaterial "uber"
+	TransformBegin
+		Translate 0 1 0
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+AttributeBegin
+	NamedMaterial "glass"
+	TransformBegin
+		Translate 0 1.5 -0.5
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+
+AttributeBegin
+	NamedMaterial "porcelaine"
+	TransformBegin
+		Translate -0.5 1 0
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+	
+AttributeBegin
+	NamedMaterial "metal"
+	TransformBegin
+		Translate -1 1 0
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+AttributeBegin
+	NamedMaterial "wood"
+	TransformBegin
+		Translate -1 1.5 -0.5
+		Shape "sphere" "float radius" [ 0.2 ]
+	TransformEnd
+AttributeEnd
+
+# floor
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -1 0 -1   -1 0 1   1 0 1   1 0 -1 ] "normal N" [ 0 1 0   0 1 0   0 1 0   0 1 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	
+# ceiling
+#AttributeBegin
+	#AreaLightSource "diffuse" "rgb L" [ 2.000000 1.000000 0.400000 ]
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ 1 2 1   -1 2 1   -1 2 -1   1 2 -1 ] "normal N" [ 0 -1 0   0 -1 0   0 -1 0   0 -1 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+#AttributeEnd
+# wall front of the camera
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -1 0 -1   -1 2 -1   1 2 -1   1 0 -1 ] "normal N" [ 0 0 -1   0 0 -1   0 0 -1   0 0 -1 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	
+# wall behind the camera
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -1 0 1   -1 2 1   1 2 1   1 0 1 ] "normal N" [ 0 0 1   0 0 1   0 0 1   0 0 1 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	
+# right wall
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ 1 0 -1   1 2 -1   1 2 1   1 0 1 ] "normal N" [ 1 0 0   1 0 0   1 0 0   1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	
+# left wall
+	NamedMaterial "white" 
+	Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -1 0 1   -1 2 1   -1 2 -1   -1 0 -1 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+
+# light	
+	AttributeBegin
+		AreaLightSource "diffuse" "rgb L" [ 17.000000 12.000000 4.000000 ] 
+		NamedMaterial "white" 
+		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.24 1.98 -0.22 0.23 1.98 -0.22 0.23 1.98 0.16 -0.24 1.98 0.16 ] "normal N" [ -8.74228e-008 -1 1.86006e-007 -8.74228e-008 -1 1.86006e-007 -8.74228e-008 -1 1.86006e-007 -8.74228e-008 -1 1.86006e-007 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	AttributeEnd
+WorldEnd

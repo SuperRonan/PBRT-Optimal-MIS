@@ -4,3 +4,5 @@ src/bin
 src/objs
 .sconsign.dblite
 build
+test/scene.pbrt
+test/results

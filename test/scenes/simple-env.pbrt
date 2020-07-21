@@ -1,0 +1,64 @@
+#LookAt 3 4 1.5  # eye
+#       .5 .5 0  # look at point
+#       0 0 1    # up vector
+
+# straight at the ground!
+LookAt 0 0 1  # eye
+       0 0 0  # look at point
+       0 1 0    # up vector
+Camera "perspective" "float fov" 45
+
+Sampler "random" "integer pixelsamples" 10
+
+##INTEGRATOR-DEF-START
+
+Integrator "bdpt" "integer maxdepth" [1] "string misweights" "balance" "bool visualizestrategies" "true"
+
+#Integrator "path" "integer maxdepth" [1]
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "no"
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "power" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "power" "string lighttracer" "no"
+
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "balance" "string lighttracer" "full"
+#Integrator "bdpt" "integer maxdepth" [1] "string misweights" "balance" "string lighttracer" "no"
+
+##INTEGRATOR-DEF-END
+
+Film "image" "string filename" "simple-env.exr"
+     "integer xresolution" [400] "integer yresolution" [400]
+
+WorldBegin
+
+# uniform blue-ish illumination from all directions
+LightSource "infinite" "rgb L" [.5 .5 .5]
+
+# approximate the sun
+#LightSource "distant"  "point from" [ -30 40  100 ]
+#   "blackbody L" [3000 1.5]
+
+#AttributeBegin
+#  Material "glass"
+#  Shape "sphere" "float radius" 1
+#AttributeEnd
+
+AttributeBegin
+#  Texture "checks" "spectrum" "checkerboard"
+#          "float uscale" [8] "float vscale" [8]
+#          "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+#  Material "matte" "texture Kd" "checks"
+
+  #Material "matte" "rgb Kd" [1 1 1]
+
+  Material "translucent" "rgb Kd" [1 1 1] "rgb Ks" [0 0 0]
+
+  Translate 0 0 -1
+  Shape "trianglemesh"
+      "integer indices" [0 1 2 0 2 3]
+      "point P" [ -20 -20 0   20 -20 0   20 20 0   -20 20 0 ]
+      "float st" [ 0 0   1 0    1 1   0 1 ]
+AttributeEnd
+
+WorldEnd
