@@ -53,6 +53,7 @@
 #include "filters/sinc.h"
 #include "filters/triangle.h"
 #include "integrators/bdpt.h"
+#include "integrators/bdpt_opti.h"
 #include "integrators/directlighting.h"
 #include "integrators/mlt.h"
 #include "integrators/ao.h"
@@ -1685,6 +1686,8 @@ Integrator *RenderOptions::MakeIntegrator() const {
         integrator = CreateVolPathIntegrator(IntegratorParams, sampler, camera);
     else if (IntegratorName == "bdpt") {
         integrator = CreateBDPTIntegrator(IntegratorParams, sampler, camera);
+    } else if (IntegratorName == "obpdt") {
+        integrator = CreateOBDPTIntegrator(IntegratorParams, sampler, camera);
     } else if (IntegratorName == "mlt") {
         integrator = CreateMLTIntegrator(IntegratorParams, camera);
     } else if (IntegratorName == "ambientocclusion") {

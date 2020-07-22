@@ -51,9 +51,11 @@ scenes = [
 # Select your integrator
 # options: (name, option)
 exec_filters = [
-	('path', ''),			 # path tracer
-	#("light", ''),  		# light tracer (to reimplement)
-	('bdpt', ''),	 		 # bdpt (vanilla)
+	#('path', ''),			# path tracer
+	#("light", ''),			# light tracer (to reimplement)
+	#('bdpt', ''),			# bdpt (vanilla)
+
+	('obdpt', ''),			# obdpt
 ]
 
 
