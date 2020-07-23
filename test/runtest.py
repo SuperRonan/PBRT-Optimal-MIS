@@ -53,9 +53,9 @@ scenes = [
 exec_filters = [
 	#('path', ''),			# path tracer
 	#("light", ''),			# light tracer (to reimplement)
-	#('bdpt', ''),			# bdpt (vanilla)
+	('bdpt', ''),			# bdpt (vanilla)
 
-	('obdpt', ''),			# obdpt
+	#('obdpt', ''),			# obdpt
 ]
 
 
@@ -138,6 +138,7 @@ for mm in min_max:
 				print(exec_filter[0])
 
 				pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
+				print(pbrt_scene.integrator)
 				pbrt_scene.sampler = sampler_str(number_of_samples)
 				
 				pbrt_scene.makeTmp()

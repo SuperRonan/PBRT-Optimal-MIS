@@ -33,8 +33,8 @@ class PBRTSceneFile:
 		self.tmp_filename = self.filename[0: len(self.filename)-5] + '_TMP.pbrt'
 
 		new_list = self.lines.copy()
-		new_list.append(self.integrator)
-		new_list.append(self.sampler)
+		new_list.insert(0, self.integrator)
+		new_list.insert(0, self.sampler)
 
 		content = '\n'.join(new_list)
 
