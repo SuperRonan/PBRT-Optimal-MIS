@@ -41,19 +41,6 @@
 #include "sampler.h"
 #include "stats.h"
 
-#ifdef _MSC_VER
-// Optimal MIS uses Eigen, which at some point defines an Infinity variable
-// It creates a conflict with pbrt's Infinity macro
-// Btw, why is Infinity defined as a macro when _MSC_VER is defined,
-// and not as a static constexpr Float, like in the other case???
-#pragma push_macro("Infinity")
-#undef Infinity
-#endif
-#include <MIS/ImageEstimators.h>
-#ifdef _MSC_VER
-#pragma pop_macro("Infinity")
-#endif
-
 
 namespace pbrt {
 
@@ -210,7 +197,7 @@ namespace pbrt {
                 int N = depth == 0 ? 1 : depth + 2;
                 int width = sampleExtent.x;
                 int height = sampleExtent.y;
-                estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(MIS::Heuristic::Balance, N, width, height));
+                estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(heuristic, N, width, height));
             }
 
             ParallelFor2D([&](const Point2i tile) {
@@ -454,10 +441,28 @@ namespace pbrt {
             }
         }
 
+        std::string h_name = params.FindOneString("heuristic", "balance");
+        MIS::Heuristic h;
+        if (h_name == "balance")
+            h = MIS::Heuristic::Balance;
+        else if (h_name == "power")
+            h = MIS::Heuristic::Power;
+        else if (h_name == "naive")
+            h = MIS::Heuristic::Naive;
+        else if (h_name == "cutoff")
+            h = MIS::Heuristic::CutOff;
+        else if (h_name == "maximum")
+            h = MIS::Heuristic::Maximum;
+        else if (h_name == "direct")
+            h = MIS::Heuristic::Direct;
+        else
+            Error(std::string(std::string("Heuristic ") + h_name + " is not recognized!").c_str());
+
+
         std::string lightStrategy = params.FindOneString("lightsamplestrategy",
             "power");
         return new OBDPTIntegrator(sampler, camera, maxDepth, visualizeStrategies,
-            visualizeWeights, pixelBounds, lightStrategy);
+            visualizeWeights, pixelBounds, h, lightStrategy);
     }
 
 }  // namespace pbrt

@@ -52,6 +52,19 @@
 // Moved shared bdpt functions to:
 #include "bdpt_base.h"
 
+#ifdef _MSC_VER
+// Optimal MIS uses Eigen, which at some point defines an Infinity variable
+// It creates a conflict with pbrt's Infinity macro
+// Btw, why is Infinity defined as a macro when _MSC_VER is defined,
+// and not as a static constexpr Float, like in the other case???
+#pragma push_macro("Infinity")
+#undef Infinity
+#endif
+#include <MIS/ImageEstimators.h>
+#ifdef _MSC_VER
+#pragma pop_macro("Infinity")
+#endif
+
 namespace pbrt {
 
     // BDPT Helper Definitions
@@ -67,6 +80,7 @@ namespace pbrt {
             std::shared_ptr<const Camera> camera, int maxDepth,
             bool visualizeStrategies, bool visualizeWeights,
             const Bounds2i& pixelBounds,
+            MIS::Heuristic heuristic,
             const std::string& lightSampleStrategy = "power")
             : sampler(sampler),
             camera(camera),
@@ -74,7 +88,9 @@ namespace pbrt {
             visualizeStrategies(visualizeStrategies),
             visualizeWeights(visualizeWeights),
             pixelBounds(pixelBounds),
-            lightSampleStrategy(lightSampleStrategy) {}
+            lightSampleStrategy(lightSampleStrategy),
+            heuristic(heuristic)
+        {}
         void Render(const Scene& scene);
 
     private:
@@ -86,6 +102,7 @@ namespace pbrt {
         const bool visualizeWeights;
         const Bounds2i pixelBounds;
         const std::string lightSampleStrategy;
+        const MIS::Heuristic heuristic;
     };
 
     // Returns the estimate (f(x) / p_s(x)) for technique (s, t) 

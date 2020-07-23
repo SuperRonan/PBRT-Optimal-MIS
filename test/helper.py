@@ -54,11 +54,11 @@ class PBRTSceneFile:
 def sampler_str(n):
 	return 'Sampler "random" "integer pixelsamples" %d' % (n)
 
-def integrator_string(integrator_name, min_depth, max_depth, LT, max_opti_depth):
-	return 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ]' % (integrator_name, max_depth, min_depth)
+def integrator_string(integrator_name, min_depth, max_depth, heuristic):
+	return 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s"' % (integrator_name, max_depth, min_depth, heuristic)
 
 def integrator_str(options, min_depth, max_depth, max_opti_depth):
-	return integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth)
+	return integrator_string(options[0], min_depth, max_depth, options[1])
 
 def set_integrator(scene, integrator_str):
 	start = '##INTEGRATOR-DEF-START'
@@ -76,7 +76,7 @@ def set_number_of_samples(scene, n):
 
 def filter_name(options):
 	res = options[0]
-	if(options[1] is not None):
-		res = res + options[1]
+	if res == 'obdpt':
+		res = options[1]
 	return res
 
