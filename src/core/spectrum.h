@@ -281,6 +281,11 @@ class CoefficientSpectrum {
     // CoefficientSpectrum Public Data
     static const int nSamples = nSpectrumSamples;
 
+    static constexpr int size()
+    {
+        return nSamples;
+    }
+
   protected:
     // CoefficientSpectrum Protected Data
     Float c[nSpectrumSamples];

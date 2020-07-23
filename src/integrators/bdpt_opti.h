@@ -88,7 +88,7 @@ namespace pbrt {
         const std::string lightSampleStrategy;
     };
 
-
+    // Returns the estimate (f(x) / p_s(x)) for technique (s, t) 
     Spectrum ConnectOBDPT(
         const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
         int t, const Distribution1D& lightDistr,

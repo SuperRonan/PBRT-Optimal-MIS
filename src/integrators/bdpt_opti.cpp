@@ -41,20 +41,40 @@
 #include "sampler.h"
 #include "stats.h"
 
+#ifdef _MSC_VER
+// Optimal MIS uses Eigen, which at some point defines an Infinity variable
+// It creates a conflict with pbrt's Infinity macro
+// Btw, why is Infinity defined as a macro when _MSC_VER is defined,
+// and not as a static constexpr Float, like in the other case???
+#pragma push_macro("Infinity")
+#undef Infinity
+#endif
+#include <MIS/ImageEstimators.h>
+#ifdef _MSC_VER
+#pragma pop_macro("Infinity")
+#endif
+
+
 namespace pbrt {
 
     STAT_PERCENT("Integrator/Zero-radiance paths", zeroRadiancePaths, totalPaths);
     STAT_INT_DISTRIBUTION("Integrator/Path length", pathLength);
 
 
-    // BDPT Utility Functions
-
-    Float MISWeights(const Scene& scene, Vertex* lightVertices,
-        Vertex* cameraVertices, Vertex& sampled, int s, int t,
+    // OBDPT Utility Functions
+    // Fills the weights vector with the balance weights
+    void BalanceWeights(const Scene& scene, Vertex* lightVertices,
+        Vertex* cameraVertices, Vertex& sampled, const int s, const int t,
         const Distribution1D& lightPdf,
-        const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf) {
-        if (s + t == 2) return 1;
+        const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf, 
+        Float * weights) {
+        if (s + t == 2) {
+            // Direct connection between the camera and a light, no light tracing, only once tech
+            weights[0] = 1;
+            return;
+        }
         Float sumRi = 0;
+        Float * const& ratios = weights;
 
         // Temporarily update vertex properties for current strategy
 
@@ -98,12 +118,13 @@ namespace pbrt {
         // Consider hypothetical connection strategies along the camera subpath
         Float ri = 1;
         for (int i = t - 1; i > 0; --i) {
-            ri *=
-                cameraVertices[i].pdfRev / cameraVertices[i].pdfFwd;
+            ri *= cameraVertices[i].pdfRev / cameraVertices[i].pdfFwd;
             Float actualRi = (s == 0 && i == t - 1) ?
                 ri * s1Pdf / cameraVertices[i].pdfRev : ri;
-            if (!cameraVertices[i].delta && !cameraVertices[i - 1].delta)
-                sumRi += actualRi;
+            if (cameraVertices[i].delta | cameraVertices[i - 1].delta)
+                actualRi = 0;
+            ratios[(s+t)-i] = actualRi;
+            sumRi += actualRi;
         }
 
         // Consider hypothetical connection strategies along the light subpath
@@ -114,10 +135,20 @@ namespace pbrt {
                 : lightVertices[0].IsDeltaLight();
             Float actualRi = (i == 1) ?
                 ri * s1Pdf / lightVertices[0].pdfFwd : ri;
-            if (!lightVertices[i].delta && !deltaLightvertex) sumRi += actualRi;
+            if (lightVertices[i].delta | deltaLightvertex)
+            {
+                actualRi = 0;
+            }
+            sumRi += actualRi;
+            ratios[i] = actualRi;
         }
         Float actualRi = (s == 1) ? s1Pdf / lightVertices[0].pdfFwd : 1.0;
-        return actualRi / (actualRi + sumRi);
+        ratios[s] = actualRi;
+        sumRi += actualRi;
+
+        for (int i = 0; i < (s+t); ++i)
+            weights[i] = ratios[i] / sumRi ;
+
     }
 
     // BDPT Method Definitions
@@ -170,6 +201,18 @@ namespace pbrt {
 
         // Render and write the output image to disk
         if (scene.lights.size() > 0) {
+
+            const bool USE_ROW_MAJOR = true;
+            std::vector<MIS::ImageEstimator<Spectrum, Float, USE_ROW_MAJOR>*> estimators;
+            estimators.reserve(maxDepth + 1);
+            for (int depth = 0; depth <= maxDepth; ++depth)
+            {
+                int N = depth == 0 ? 1 : depth + 2;
+                int width = sampleExtent.x;
+                int height = sampleExtent.y;
+                estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(MIS::Heuristic::Balance, N, width, height));
+            }
+
             ParallelFor2D([&](const Point2i tile) {
                 // Render a single tile using BDPT
                 MemoryArena arena;
@@ -195,6 +238,7 @@ namespace pbrt {
                         // Trace the camera subpath
                         Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
                         Vertex* lightVertices = arena.Alloc<Vertex>(maxDepth + 1);
+                        Float* balance_weights = arena.Alloc<Float>(maxDepth + 2);
                         int nCamera = GenerateCameraSubpath(
                             scene, *tileSampler, arena, maxDepth + 2, *camera,
                             pFilm, cameraVertices);
@@ -214,7 +258,7 @@ namespace pbrt {
                             lightVertices);
 
                         // Execute all BDPT connection strategies
-                        Spectrum L(0.f);
+                        Spectrum estimate(0.f);
                         for (int t = 1; t <= nCamera; ++t) {
                             for (int s = 0; s <= nLight; ++s) {
                                 int depth = t + s - 2;
@@ -224,41 +268,54 @@ namespace pbrt {
                                 // Execute the $(s, t)$ connection strategy and
                                 // update _L_
                                 Point2f pFilmNew = pFilm;
-                                Float misWeight = 0.f;
-                                Spectrum Lpath = ConnectOBDPT(
+                                estimate = ConnectOBDPT(
                                     scene, lightVertices, cameraVertices, s, t,
                                     *lightDistr, lightToIndex, *camera, *tileSampler,
-                                    &pFilmNew, &misWeight);
-                                VLOG(2) << "Connect bdpt s: " << s << ", t: " << t <<
-                                    ", Lpath: " << Lpath << ", misWeight: " << misWeight;
-                                if (visualizeStrategies || visualizeWeights) {
-                                    Spectrum value;
-                                    if (visualizeStrategies)
-                                        value =
-                                        misWeight == 0 ? 0 : Lpath / misWeight;
-                                    if (visualizeWeights) value = Lpath;
-                                    weightFilms[BufferIndex(s, t)]->AddSplat(
-                                        pFilmNew, value);
+                                    &pFilmNew, balance_weights);
+
+                                bool LTSampleOutside = (t == 1 && !Inside(pFilmNew, Bounds2f(sampleBounds)));
+                                if (!estimate.IsBlack()) 
+                                {
+                                    auto* estimator = estimators[(s + t - 2)];
+                                    // This is maybe not very clever, since the inverse is done in the addEstimate...
+                                    Float u = pFilmNew.x / sampleExtent.x;
+                                    Float v = pFilmNew.y / sampleExtent.y;
+                                    estimator->addEstimate(estimate, balance_weights, s, u, v);
                                 }
-                                if (t != 1)
-                                    L += Lpath;
-                                else
-                                    film->AddSplat(pFilmNew, Lpath);
+                                
                             }
                         }
-                        VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
-                            ", (y: " << L.y() << ")";
-                        filmTile->AddSample(pFilm, L);
+                        //VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
+                        //    ", (y: " << L.y() << ")";
+                        //filmTile->AddSample(pFilm, L);
                         arena.Reset();
                     } while (tileSampler->StartNextSample());
                 }
-                film->MergeFilmTile(std::move(filmTile));
+                //film->MergeFilmTile(std::move(filmTile));
                 reporter.Update();
                 LOG(INFO) << "Finished image tile " << tileBounds;
                 }, Point2i(nXTiles, nYTiles));
+            
+            std::vector<Spectrum> buffer(sampleExtent.x* sampleExtent.y, Spectrum(0));
+            for (int depth = 0; depth <= maxDepth; ++depth)
+            {
+                auto* estimator = estimators[depth];
+                estimator->solve(buffer.data(), sampler->samplesPerPixel);
+            }
+
+            estimators[0]->loopThroughImage([&film, &buffer, &estimators](int i, int j)
+                {
+                    Point2f p(i + 0.5, j + 0.5);
+                    film->AddSplat(p, buffer[estimators[0]->pixelTo1D(i, j)]);
+                });
+            for (int depth = 0; depth <= maxDepth; ++depth)
+                delete estimators[depth];
+
             reporter.Done();
         }
-        film->WriteImage(1.0f / sampler->samplesPerPixel);
+        
+
+        film->WriteImage();
 
         // Write buffers for debug visualization
         if (visualizeStrategies || visualizeWeights) {
@@ -360,14 +417,11 @@ namespace pbrt {
         if (L.IsBlack()) ++zeroRadiancePaths;
         ReportValue(pathLength, s + t - 2);
 
-        // Compute MIS weight for connection strategy
-        Float misWeight =
-            L.IsBlack() ? 0.f : MISWeights(scene, lightVertices, cameraVertices,
-                sampled, s, t, lightDistr, lightToIndex, s1Pdf);
-        VLOG(2) << "MIS weight for (s,t) = (" << s << ", " << t << ") connection: "
-            << misWeight;
-        DCHECK(!std::isnan(misWeight));
-        L *= misWeight;
+        if (!L.IsBlack())
+        {
+            BalanceWeights(scene, lightVertices, cameraVertices,
+                sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights);
+        }
         
         return L;
     }
