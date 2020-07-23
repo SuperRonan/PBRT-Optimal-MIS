@@ -198,6 +198,7 @@ namespace pbrt {
                 int width = sampleExtent.x;
                 int height = sampleExtent.y;
                 estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(heuristic, N, width, height));
+                estimators.back()->setSampleForTechnique(N - 1, width * height);
             }
 
             ParallelFor2D([&](const Point2i tile) {

@@ -55,11 +55,11 @@ exec_filters = [
 	#("light", '', ''),			# light tracer (to reimplement)
 	#('bdpt', '', ''),			# bdpt (vanilla)
 
-	('obdpt', 'balance', ''),	# obdpt - balance
-	('obdpt', 'power', ''),		# obdpt - power
-	('obdpt', 'cutoff', ''),	# obdpt - cutoff
-	('obdpt', 'maximum', ''),	# obdpt - maximum
-	('obdpt', 'naive', ''),		# obdpt - naive
+	#('obdpt', 'balance', ''),	# obdpt - balance
+	#('obdpt', 'power', ''),		# obdpt - power
+	#('obdpt', 'cutoff', ''),	# obdpt - cutoff
+	#('obdpt', 'maximum', ''),	# obdpt - maximum
+	#('obdpt', 'naive', ''),		# obdpt - naive
 	('obdpt', 'direct', ''),	# obdpt - direct
 ]
 
@@ -67,11 +67,11 @@ exec_filters = [
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5, 5),
 	#(2, 6),
-	#(2, 7, 7),
+	(2, 7, 7),
 	#(2, 8),
 	#(2, 9),
 	#(2, 10),
