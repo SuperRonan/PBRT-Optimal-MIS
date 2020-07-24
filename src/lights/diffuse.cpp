@@ -128,8 +128,10 @@ void DiffuseAreaLight::Pdf_Le(const Ray &ray, const Normal3f &n, Float *pdfPos,
     Interaction it(ray.o, n, Vector3f(), Vector3f(n), ray.time,
                    mediumInterface);
     *pdfPos = shape->Pdf(it);
-    *pdfDir = twoSided ? (.5 * CosineHemispherePdf(AbsDot(n, ray.d)))
-                       : CosineHemispherePdf(Dot(n, ray.d));
+    if (twoSided)
+        *pdfDir = .5 * CosineHemispherePdf(AbsDot(n, ray.d));
+    else
+        *pdfDir = std::max(Float(0), CosineHemispherePdf(Dot(n, ray.d))); // pdf should be zero on the other side, not negative
 }
 
 std::shared_ptr<AreaLight> CreateDiffuseAreaLight(
