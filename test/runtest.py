@@ -55,7 +55,7 @@ exec_filters = [
 	#("light", '', ''),			# light tracer (to reimplement)
 	#('bdpt', '', ''),			# bdpt (vanilla)
 
-	#('obdpt', 'balance', ''),	# obdpt - balance
+	('obdpt', 'balance', ''),	# obdpt - balance
 	#('obdpt', 'power', ''),		# obdpt - power
 	#('obdpt', 'cutoff', ''),	# obdpt - cutoff
 	#('obdpt', 'maximum', ''),	# obdpt - maximum
@@ -98,11 +98,11 @@ numbers_of_samples = [
 	#2,
 	#4, 
 	#8, 
-	16,
+	#16,
 	#32, 
 	#64, 
 	#128, 
-	#256, 
+	256, 
 	#512, 
 	#1024,
 	#2048,

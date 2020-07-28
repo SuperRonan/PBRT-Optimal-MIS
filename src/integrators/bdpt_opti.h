@@ -111,7 +111,7 @@ namespace pbrt {
         int t, const Distribution1D& lightDistr,
         const std::unordered_map<const Light*, size_t>& lightToIndex,
         const Camera& camera, Sampler& sampler, Point2f* pRaster,
-        Float* balance_weights);
+        Float* balanceWeights, bool & sparseZero);
 
     OBDPTIntegrator* CreateOBDPTIntegrator(const ParamSet& params,
         std::shared_ptr<Sampler> sampler,
