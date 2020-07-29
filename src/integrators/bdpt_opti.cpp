@@ -54,7 +54,7 @@ namespace pbrt {
         Vertex* cameraVertices, Vertex& sampled, const int s, const int t,
         const Distribution1D& lightPdf,
         const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf, 
-        Float * weights) {
+        Float * weights, bool & sparseZero) {
         if (s + t == 2) {
             // Direct connection between the camera and a light, no light tracing, only once tech
             weights[0] = 1;
@@ -85,17 +85,29 @@ namespace pbrt {
 
         // Update reverse density of vertex $\pt{}_{t-1}$
         ScopedAssignment<Float> a4;
-        if (pt)
-            a4 = { &pt->pdfRev, s > 0 ? qs->Pdf(scene, qsMinus, *pt)
-                                     : pt->PdfLightOrigin(scene, *ptMinus, lightPdf,
-                                                          lightToIndex) };
+        if (pt) {
+            Float pdf = (s == 0) ?
+                pt->PdfLightOrigin(scene, *ptMinus, lightPdf, lightToIndex) :
+                qs->Pdf(scene, qsMinus, *pt);
+            if (pdf == 0)
+            {
+                // pt is on the env map, but the env map is dark, so not really a light source
+                sparseZero = true;
+                return;
+            }
+            a4 = { &pt->pdfRev, pdf};
+        }
 
         // Update reverse density of vertex $\pt{}_{t-2}$
         ScopedAssignment<Float> a5;
-        if (ptMinus)
-            a5 = { &ptMinus->pdfRev, s > 0 ? pt->Pdf(scene, qs, *ptMinus)
-                                          : pt->PdfLight(scene, *ptMinus) };
-
+        if (ptMinus && ptMinus->type != VertexType::Camera)
+        {
+            Float pdf = (s == 0) ?
+                pt->PdfLight(scene, *ptMinus) :
+                pt->Pdf(scene, qs, *ptMinus);
+            a5 = { &ptMinus->pdfRev, pdf };
+        }
+        
         // Update reverse density of vertices $\pq{}_{s-1}$ and $\pq{}_{s-2}$
         ScopedAssignment<Float> a6;
         if (qs) a6 = { &qs->pdfRev, pt->Pdf(scene, ptMinus, *qs) };
@@ -123,15 +135,15 @@ namespace pbrt {
             Float actualRi = (i == 1) ?
                 ri * s1Pdf / lightVertices[0].pdfFwd : ri;
             if (lightVertices[i].delta | deltaLightvertex)
-            {
                 actualRi = 0;
-            }
             sumRi += actualRi;
             ratios[i] = actualRi;
         }
         Float actualRi = (s == 1) ? s1Pdf / lightVertices[0].pdfFwd : 1.0;
         ratios[s] = actualRi;
         sumRi += actualRi;
+
+        DCHECK_GT(sumRi, 0);
 
         for (int i = 0; i < (s+t); ++i)
             weights[i] = ratios[i] / sumRi ;
@@ -321,13 +333,15 @@ namespace pbrt {
         int t, const Distribution1D& lightDistr,
         const std::unordered_map<const Light*, size_t>& lightToIndex,
         const Camera& camera, Sampler& sampler, Point2f* pRaster,
-        Float * balance_weights, bool & sparseZero) {
+        Float* balance_weights, bool& sparseZero) {
         ProfilePhase _(Prof::BDPTConnectSubpaths);
         Spectrum L(0.f);
         // Ignore invalid connections related to infinite area lights
         if (t > 1 && s != 0 && cameraVertices[t - 1].type == VertexType::Light)
-            return Spectrum(0.f);
-
+        {
+            sparseZero = true;
+            return 0;
+        }
         Float s1Pdf;
         // Perform connection and write contribution to _L_
         Vertex sampled;
@@ -429,10 +443,11 @@ namespace pbrt {
         if (L.IsBlack()) ++zeroRadiancePaths;
         ReportValue(pathLength, s + t - 2);
 
+
         if (!sparseZero)
         {
             BalanceWeights(scene, lightVertices, cameraVertices,
-                sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights);
+                sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights, sparseZero);
         }
         
         return L;

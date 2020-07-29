@@ -16,7 +16,7 @@ num_threads = 16
 scenes = [
 	#['./scenes/simple-env.pbrt', 'simple-env'], # this scene contains an environment map
 	#['./scenes/simple-area.pbrt', 'simple-area'],
-	['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
+	#['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
 	#['./scenes/box-glossy.pbrt', 'box-glossy'], # a closed cornell box with glossy materials on the cubes
 	#['./scenes/box-phong.pbrt', 'box-phong'],
 	#['./scenes/box-mirror.pbrt', 'box-mirror'], # a closed cornell box with mirrors on the cubes
@@ -31,7 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
-	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
@@ -55,7 +55,7 @@ exec_filters = [
 	#("light", '', ''),			# light tracer (to reimplement)
 	#('bdpt', '', ''),			# bdpt (vanilla)
 
-	('obdpt', 'balance', ''),	# obdpt - balance
+	#('obdpt', 'balance', ''),	# obdpt - balance
 	#('obdpt', 'power', ''),		# obdpt - power
 	#('obdpt', 'cutoff', ''),	# obdpt - cutoff
 	#('obdpt', 'maximum', ''),	# obdpt - maximum
@@ -98,11 +98,11 @@ numbers_of_samples = [
 	#2,
 	#4, 
 	#8, 
-	#16,
+	16,
 	#32, 
 	#64, 
 	#128, 
-	256, 
+	#256, 
 	#512, 
 	#1024,
 	#2048,
