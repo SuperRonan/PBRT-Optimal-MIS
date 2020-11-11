@@ -16,7 +16,7 @@ Sampler "random" "integer pixelsamples" 16
 
 #PixelFilter "triangle" "float xwidth" [ 1.000000 ] "float ywidth" [ 1.000000 ] 
 
-Film "image" "integer xresolution" [ 512 ] "integer yresolution" [ 512 ] "string filename" [ "cornell-box.png" ] 
+Film "image" "integer xresolution" [ 1024 ] "integer yresolution" [ 1024 ] "string filename" [ "cornell-box.png" ] 
 
 Transform [ 1 0 0 0
 			0 1 0 0 

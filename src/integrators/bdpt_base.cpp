@@ -104,17 +104,23 @@ namespace pbrt
                 TransportMode::Importance, path + 1);
 
         // Correct subpath sampling densities for infinite area lights
-        if (path[0].IsInfiniteLight()) {
+        Vertex& lv = path[0];
+        if (lv.IsInfiniteLight()) {
             // Set spatial density of _path[1]_ for infinite area light
+            if (lv.ei.light->flags & (int)LightFlags::DeltaDirection) // Directional light
+            {
+                lv.pdfFwd = pdfDir;
+                lv.pdfRev = 0;
+            }
+            else // Environement map
+            {
+                lv.pdfFwd = InfiniteLightDensity(scene, lightDistr, lightToIndex, ray.d);
+            }
             if (nVertices > 0) {
                 path[1].pdfFwd = pdfPos;
                 if (path[1].IsOnSurface())
                     path[1].pdfFwd *= AbsDot(ray.d, path[1].ng());
             }
-
-            // Set spatial density of _path[0]_ for infinite area light
-            path[0].pdfFwd =
-                InfiniteLightDensity(scene, lightDistr, lightToIndex, ray.d);
         }
         return nVertices + 1;
     }

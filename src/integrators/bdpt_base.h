@@ -122,7 +122,7 @@ namespace pbrt
     }
 
 
-    enum class VertexType { Camera, Light, Surface, Medium };
+    enum class VertexType { Camera, Light, Surface, Medium, EnvMap };
 
     struct Vertex {
         // Vertex Public Data
@@ -310,6 +310,10 @@ namespace pbrt
         Float Pdf(const Scene& scene, const Vertex* prev,
             const Vertex& next) const {
             if (type == VertexType::Light) return PdfLight(scene, next);
+            if (next.type == VertexType::Camera || next.IsDeltaLight())
+            {
+                return 0;
+            }
             // Compute directions to preceding and next vertex
             Vector3f wn = next.p() - p();
             if (wn.LengthSquared() == 0) return 0;
@@ -374,8 +378,14 @@ namespace pbrt
             w = Normalize(w);
             if (IsInfiniteLight()) {
                 // Return solid angle density for infinite light sources
-                return InfiniteLightDensity(scene, lightDistr, lightToDistrIndex,
-                    w);
+                if (IsDeltaLight())
+                {
+                    const size_t index = lightToDistrIndex.find(ei.light)->second;
+                    return lightDistr.DiscretePDF(index);
+                }
+                else
+                    return InfiniteLightDensity(scene, lightDistr, 
+                        lightToDistrIndex, w);
             }
             else {
                 // Return solid angle density for non-infinite light sources

@@ -303,6 +303,7 @@ Spectrum ConnectBDPT(
             if (pdf > 0 && !Wi.IsBlack()) {
                 // Initialize dynamically sampled vertex and _L_ for $t=1$ case
                 sampled = Vertex::CreateCamera(&camera, vis.P1(), Wi / pdf);
+                sampled.pdfFwd = pdf;
                 L = qs.beta * qs.f(sampled, TransportMode::Importance) * sampled.beta;
                 if (qs.IsOnSurface()) L *= AbsDot(wi, qs.ns());
                 DCHECK(!L.HasNaNs());

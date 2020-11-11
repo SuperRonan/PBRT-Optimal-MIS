@@ -86,10 +86,10 @@ namespace pbrt {
         // Update reverse density of vertex $\pt{}_{t-1}$
         ScopedAssignment<Float> a4;
         if (pt) {
-            Float pdf = (s == 0) ?
+            Float pdf = ((s == 0) ?
                 pt->PdfLightOrigin(scene, *ptMinus, lightPdf, lightToIndex) :
-                qs->Pdf(scene, qsMinus, *pt);
-            if (pdf == 0)
+                qs->Pdf(scene, qsMinus, *pt));
+            if (pdf == 0 && s == 0)
             {
                 // pt is on the env map, but the env map is dark, so not really a light source
                 sparseZero = true;
@@ -275,9 +275,11 @@ namespace pbrt {
                                     &pFilmNew, balanceWeights, sparseZero);
 
                                 bool LTSampleOutside = (t == 1 && !Inside(pFilmNew, Bounds2f(sampleBounds)));
-                                if (LTSampleOutside) 
+                                if (LTSampleOutside)
+                                {
                                     sparseZero = true;
-                                if (!sparseZero) 
+                                }
+                                if (!sparseZero)
                                 {
                                     auto* estimator = estimators[(s + t - 2)];
                                     // This is maybe not very clever, since the inverse is done in the addEstimate...
@@ -368,6 +370,7 @@ namespace pbrt {
                 if (pdf > 0 && !Wi.IsBlack()) {
                     // Initialize dynamically sampled vertex and _L_ for $t=1$ case
                     sampled = Vertex::CreateCamera(&camera, vis.P1(), Wi / pdf);
+                    sampled.pdfFwd = pdf;
                     L = qs.beta * qs.f(sampled, TransportMode::Importance) * sampled.beta;
                     if (qs.IsOnSurface()) L *= AbsDot(wi, qs.ns());
                     DCHECK(!L.HasNaNs());

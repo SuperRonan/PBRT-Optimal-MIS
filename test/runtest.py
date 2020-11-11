@@ -31,7 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
-	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
@@ -46,6 +46,8 @@ scenes = [
 	#[pbrt_scenes_folder + 'villa/villa-lights-on.pbrt', 'villa-lights-on'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-daytime.pbrt', 'whiteroom-daytime'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
+	[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
+	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 ]
 
 # Select your integrator
@@ -55,10 +57,10 @@ exec_filters = [
 	#("light", '', ''),			# light tracer (to reimplement)
 	#('bdpt', '', ''),			# bdpt (vanilla)
 
-	#('obdpt', 'balance', ''),	# obdpt - balance
-	#('obdpt', 'power', ''),		# obdpt - power
-	#('obdpt', 'cutoff', ''),	# obdpt - cutoff
-	#('obdpt', 'maximum', ''),	# obdpt - maximum
+	('obdpt', 'balance', ''),	# obdpt - balance
+	('obdpt', 'power', ''),		# obdpt - power
+	('obdpt', 'cutoff', ''),	# obdpt - cutoff
+	('obdpt', 'maximum', ''),	# obdpt - maximum
 	#('obdpt', 'naive', ''),		# obdpt - naive
 	('obdpt', 'direct', ''),	# obdpt - direct
 ]
@@ -69,9 +71,9 @@ min_max= [
 	#(2, 2),
 	#(2, 3),
 	#(2, 4),
-	#(2, 5, 5),
+	(2, 5, 5),
 	#(2, 6),
-	(2, 7, 7),
+	#(2, 7, 7),
 	#(2, 8),
 	#(2, 9),
 	#(2, 10),
