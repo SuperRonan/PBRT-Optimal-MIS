@@ -35,7 +35,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
-	#[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
+	[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-night.pbrt', 'pavilion-night'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-day.pbrt', 'pavilion-day'],
 	#[pbrt_scenes_folder + 'breakfast/breakfast.pbrt', 'breakfast'],
@@ -46,8 +46,12 @@ scenes = [
 	#[pbrt_scenes_folder + 'villa/villa-lights-on.pbrt', 'villa-lights-on'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-daytime.pbrt', 'whiteroom-daytime'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
-	[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
+	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
+	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
+	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'moto'],
+	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 ]
 
 # Select your integrator
@@ -57,7 +61,7 @@ exec_filters = [
 	#("light", '', ''),			# light tracer (to reimplement)
 	#('bdpt', '', ''),			# bdpt (vanilla)
 
-	('obdpt', 'balance', ''),	# obdpt - balance
+	#('obdpt', 'balance', ''),	# obdpt - balance
 	('obdpt', 'power', ''),		# obdpt - power
 	('obdpt', 'cutoff', ''),	# obdpt - cutoff
 	('obdpt', 'maximum', ''),	# obdpt - maximum

@@ -285,6 +285,10 @@ namespace pbrt {
                                     // This is maybe not very clever, since the inverse is done in the addEstimate...
                                     Float u = pFilmNew.x / sampleExtent.x;
                                     Float v = pFilmNew.y / sampleExtent.y;
+                                    if (estimate.HasNaNs() || estimate.HasInf())
+                                    {
+                                        int i = 0;
+                                    }
                                     estimator->addEstimate(estimate, balanceWeights, s, u, v);
                                 }
                                 

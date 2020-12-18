@@ -403,7 +403,10 @@ namespace pbrt
                 size_t index = lightToDistrIndex.find(light)->second;
                 pdfChoice = lightDistr.DiscretePDF(index);
 
-                light->Pdf_Le(Ray(p(), w, Infinity, time()), ng(), &pdfPos, &pdfDir);
+                if (IsDeltaLight())
+                    pdfPos = 1.0;
+                else
+                    light->Pdf_Le(Ray(p(), w, Infinity, time()), ng(), &pdfPos, &pdfDir);
                 return pdfPos * pdfChoice;
             }
         }
