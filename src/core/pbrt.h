@@ -191,6 +191,10 @@ class TextureParams;
 #ifdef _MSC_VER
 #define MaxFloat std::numeric_limits<Float>::max()
 #define Infinity std::numeric_limits<Float>::infinity()
+// Eigen (used by the MIS library) also uses a global VARIABLE (not definition) in its own namespace
+// Which creates a conflict with PBRT's Infinity macro
+// I did not change the definition in _MSC_VER, even though a static constexpr works with it (on my computer)
+//static PBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();
 #else
 static PBRT_CONSTEXPR Float MaxFloat = std::numeric_limits<Float>::max();
 static PBRT_CONSTEXPR Float Infinity = std::numeric_limits<Float>::infinity();

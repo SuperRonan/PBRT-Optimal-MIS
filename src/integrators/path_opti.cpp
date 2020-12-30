@@ -35,7 +35,6 @@ namespace pbrt
 	void PathOptiIntegrator::Preprocess(const Scene& scene, Sampler& sampler)
 	{
 		lightDistrib = CreateLightSampleDistribution(lightSampleStrategy, scene);
-		// TODO preallocate MIS estimators
 		int threads = NumSystemCores();
 		// numtechs
 		int N = 2;
@@ -120,8 +119,11 @@ namespace pbrt
 
 					// Draw path sample
 					if (rayWeight > 0)
-						L = TracePath(ray, scene, *sampler, arena, estimators.data(), rayWeight);
-
+					{
+						const int N = estimators[0]->numTechs();
+						Float* wbuffer = (Float*)arena.Alloc(sizeof(Float) * N);
+						L = TracePath(ray, scene, *sampler, arena, estimators.data(), wbuffer, rayWeight);
+					}
 					// Free _MemoryArena_ memory from computing image sample
 					// value
 					arena.Reset();
@@ -140,14 +142,11 @@ namespace pbrt
 		reporter.Done();
 	}
 
-	Spectrum PathOptiIntegrator::TracePath(const RayDifferential& _ray, const Scene& scene, Sampler& sampler, MemoryArena& arena, EstimatorPtr* estimators, Spectrum beta = 1, int depth)const
+	Spectrum PathOptiIntegrator::TracePath(const RayDifferential& _ray, const Scene& scene, Sampler& sampler, MemoryArena& arena, EstimatorPtr* estimators, Float* wbuffer, Spectrum beta, int depth)const
 	{
 		RayDifferential ray = _ray;
-		const int tid = ThreadIndex;
-		std::vector<Estimator*>& estimators = _estimators_buffer[tid];
 
 		Spectrum res = 0;
-		RayDifferential ray = ray;
 		bool specularBounce = false;
 		int bounce = 0;
 		// We assume depth starts at zero
