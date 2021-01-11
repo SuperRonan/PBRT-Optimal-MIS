@@ -3,21 +3,68 @@
 #include "scene.h"
 #include "camera.h"
 #include "progressreporter.h"
+#include "paramset.h"
 
 namespace pbrt
 {
+
+	LightSamplingTechnique::LightSamplingTechnique(Type tyupe):
+		type(type)
+	{}
+
+	LiTechnique::LiTechnique() :
+		LightSamplingTechnique(Type::Gathering)
+	{}
+
+	void LiTechnique::init(Scene const& scene, LightDistribution const& distrib)
+	{
+		distribution = &distrib;
+		this->scene = &scene;
+	}
+
+	void LiTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	{
+		const Distribution1D * distrib = distribution->Lookup(Point3f{ 0, 0, 0 });
+		Float light_pdf;
+		int light_index = distrib->SampleDiscrete(lambda, &light_pdf);
+		const std::shared_ptr<Light>& light = scene->lights[light_index];
+		sample.light = light.get();
+		sample.estimate = light->Sample_Li(ref, xi, &sample.wi, &sample.pdf, &sample.vis);
+		sample.pdf *= light_pdf;
+		if (!sample.estimate.IsBlack() && sample.pdf != 0)
+		{
+			sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
+		}
+	}
+
+	Float LiTechnique::pdf(const SurfaceInteraction& ref, Vector3f const& wi) const
+	{
+		const Distribution1D* distrib = distribution->Lookup(Point3f{ 0, 0, 0 });
+		Float light_pdf;
+		return 0;
+	}
+
+
+
+
+
+
+
+
 	PathOptiIntegrator::PathOptiIntegrator(
 		int maxDepth,
 		std::shared_ptr<const Camera> camera,
 		std::shared_ptr<Sampler> sampler,
 		const Bounds2i& pixelBounds,
 		MIS::Heuristic h,
+		std::vector<Technique> const& techniques,
 		const std::string& lightSampleStrategy) :
 		maxDepth(maxDepth),
 		lightSampleStrategy(lightSampleStrategy),
 		heuristic(h),
 		camera(camera),
 		sampler(sampler),
+		techniques(techniques),
 		pixelBounds(pixelBounds)
 	{}
 
@@ -35,24 +82,35 @@ namespace pbrt
 	void PathOptiIntegrator::Preprocess(const Scene& scene, Sampler& sampler)
 	{
 		lightDistrib = CreateLightSampleDistribution(lightSampleStrategy, scene);
-		int threads = NumSystemCores();
+		const int threads = NumSystemCores();
 		// numtechs
-		int N = 2;
+		int N = techniques.size();
 		// Allocate all the estimators
 		_estimators_buffer = std::vector<std::vector<Estimator*>>(threads, std::vector<Estimator*>());
 		ParallelFor([&](int tid)
 			{
 				std::vector<Estimator*> & estimators = _estimators_buffer[tid];
+				estimators.resize(N);
 				for (int j = 0; j < estimators.size(); ++j)
 				{
 					Estimator*& estimator = estimators[j];
 					estimator = MIS::createEstimator<Spectrum, Float>(heuristic, N);
 				}
 			}, threads);
+
+		for (Technique& tech : techniques)
+		{
+			tech.technique->init(scene, *lightDistrib);
+		}
 	}
 
 	void PathOptiIntegrator::Render(const Scene& scene)
 	{
+		if (techniques.empty())
+		{
+			Warning("Path Opti Integrator: Cannot render without any techniques!");
+			return;
+		}
 		Preprocess(scene, *sampler);
 
 		// Compute number of tiles, _nTiles_, to use for parallel rendering
@@ -120,9 +178,9 @@ namespace pbrt
 					// Draw path sample
 					if (rayWeight > 0)
 					{
-						const int N = estimators[0]->numTechs();
+						const int N = techniques.size();
 						Float* wbuffer = (Float*)arena.Alloc(sizeof(Float) * N);
-						L = TracePath(ray, scene, *sampler, arena, estimators.data(), wbuffer, rayWeight);
+						L = TracePath(ray, scene, *tileSampler, arena, estimators.data(), wbuffer, rayWeight);
 					}
 					// Free _MemoryArena_ memory from computing image sample
 					// value
@@ -140,6 +198,7 @@ namespace pbrt
 			reporter.Update();
 			}, nTiles);
 		reporter.Done();
+		camera->film->WriteImage();
 	}
 
 	Spectrum PathOptiIntegrator::TracePath(const RayDifferential& _ray, const Scene& scene, Sampler& sampler, MemoryArena& arena, EstimatorPtr* estimators, Float* wbuffer, Spectrum beta, int depth)const
@@ -185,14 +244,119 @@ namespace pbrt
 
 			const Distribution1D* distrib = lightDistrib->Lookup(isect.p);
 
-			if (isect.bsdf->NumComponents(BxDFType(BSDF_ALL & ~BSDF_SPECULAR)) > 0)
-			{
-				
-			}
+			Estimator& estimator = *estimators[depth]; // Get the estimator for the current depth
 
+			// Draw the samples from multiple techniques to estimate direct lighting
+			// And feed the samples to the estimator
+			directLighting(isect, scene, arena, sampler, estimator, wbuffer);
+
+			// TODO sample the BSDF to continue the path
+			break;
 		}
 
 		return res;
 	}
 
+
+	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
+	{
+		using Sample = LightSamplingTechnique::Sample;
+		int N = techniques.size();
+		for (int i = 0; i < N; ++i)
+		{
+			LightSamplingTechnique& technique = *techniques[i].technique;
+			int ni = techniques[i].n;
+			for (int j = 0; j < ni; ++j)
+			{
+				Point2f xi = sampler.Get2D();
+				Float lambda = sampler.Get1D();
+				Sample sample;
+				technique.sample(it, lambda, xi, sample);
+				if (sample.pdf == 0)
+				{
+					// Failed (that happens (rarely) in PBRT)
+					// skip it (consider it as a singular zero
+					continue;
+				}
+				// visibility test (for gathering techniques)
+				Spectrum visibility = sample.vis.Tr(scene, sampler);
+				bool V = !visibility.IsBlack();
+				Spectrum estimate = sample.estimate * visibility;
+				// Use the weights buffer to tmporarily store the PDFs
+				Float sum = sample.pdf;
+				Float*& pdfs = wbuffer;
+				pdfs[i] = sample.pdf;
+				for (int l = 0; l < N; ++l)
+				{
+					if (l != i)
+					{
+						Float pdf = techniques[l].technique->pdf(it, sample.wi);
+						pdfs[l] = pdf;
+						sum += pdf;
+					}
+				}
+				for (int l = 0; l < N; ++l)
+				{
+					wbuffer[l] = pdfs[l] / sum;
+				}
+
+				estimator.addEstimate(estimate, wbuffer, i);
+			}
+		}
+	}
+
+
+	PathOptiIntegrator* CreatePathOptiIntegrator(const ParamSet& params, std::shared_ptr<Sampler> sampler, std::shared_ptr<const Camera> camera)
+	{
+		int maxDepth = params.FindOneInt("maxdepth", 5);
+		
+		int np;
+		const int* pb = params.FindInt("pixelbounds", &np);
+		Bounds2i pixelBounds = camera->film->GetSampleBounds();
+		if (pb) {
+			if (np != 4)
+				Error("Expected four values for \"pixelbounds\" parameter. Got %d.",
+					np);
+			else {
+				pixelBounds = Intersect(pixelBounds,
+					Bounds2i{ {pb[0], pb[2]}, {pb[1], pb[3]} });
+				if (pixelBounds.Area() == 0)
+					Error("Degenerate \"pixelbounds\" specified.");
+			}
+		}
+		
+		std::string h_name = params.FindOneString("heuristic", "balance");
+		MIS::Heuristic h;
+		if (h_name == "balance")
+			h = MIS::Heuristic::Balance;
+		else if (h_name == "power")
+			h = MIS::Heuristic::Power;
+		else if (h_name == "naive")
+			h = MIS::Heuristic::Naive;
+		else if (h_name == "cutoff")
+			h = MIS::Heuristic::CutOff;
+		else if (h_name == "maximum")
+			h = MIS::Heuristic::Maximum;
+		else if (h_name == "direct")
+			h = MIS::Heuristic::Direct;
+		else
+			Error(std::string(std::string("Heuristic ") + h_name + " is not recognized!").c_str());
+
+		std::string lightStrategy = params.FindOneString("lightsamplestrategy",
+			"power");
+
+		// Sampling techniques
+		std::vector<PathOptiIntegrator::Technique> techs;
+
+		int n_Li = params.FindOneInt("Li", 0);
+		if (n_Li)
+		{
+			PathOptiIntegrator::Technique liTech;
+			liTech.n = n_Li;
+			liTech.technique = std::make_shared<LiTechnique>();
+			techs.push_back(liTech);
+		}
+
+		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 
+	}
 }

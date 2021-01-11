@@ -58,6 +58,7 @@
 #include "integrators/mlt.h"
 #include "integrators/ao.h"
 #include "integrators/path.h"
+#include "integrators/path_opti.h"
 #include "integrators/sppm.h"
 #include "integrators/volpath.h"
 #include "integrators/whitted.h"
@@ -1679,9 +1680,11 @@ Integrator *RenderOptions::MakeIntegrator() const {
         integrator = CreateWhittedIntegrator(IntegratorParams, sampler, camera);
     else if (IntegratorName == "directlighting")
         integrator =
-            CreateDirectLightingIntegrator(IntegratorParams, sampler, camera);
+        CreateDirectLightingIntegrator(IntegratorParams, sampler, camera);
     else if (IntegratorName == "path")
         integrator = CreatePathIntegrator(IntegratorParams, sampler, camera);
+    else if (IntegratorName == "opath")
+        integrator = CreatePathOptiIntegrator(IntegratorParams, sampler, camera);
     else if (IntegratorName == "volpath")
         integrator = CreateVolPathIntegrator(IntegratorParams, sampler, camera);
     else if (IntegratorName == "bdpt") {

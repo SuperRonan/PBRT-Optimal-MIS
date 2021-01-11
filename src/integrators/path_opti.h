@@ -29,17 +29,46 @@ namespace pbrt
 
 	public:
 
+		enum class Type {Splatting, Gathering};
+
+		const Type type;
+
 		struct Sample
 		{
 			VisibilityTester vis;
+			const Light* light;
 			Vector3f wi;
 			Float pdf;
 			Spectrum estimate;
 		};
 
-		virtual void sample(const Interaction & ref, Point2f const& xi, Sample& sample) const = 0;
+		LightSamplingTechnique(Type type);
 
-		virtual double pdf(const Interaction& ref, Vector3f const& wi) const = 0;
+		virtual void init(Scene const& scene, LightDistribution const& distrib) {};
+
+		virtual void sample(const SurfaceInteraction & ref, Float lambda, Point2f const& xi, Sample& sample) const = 0;
+
+		virtual Float pdf(const SurfaceInteraction& ref, Vector3f const& wi) const = 0;
+
+	};
+
+	// TODO make an intermediate Type GatheringTechnique
+	class LiTechnique : public LightSamplingTechnique
+	{
+	protected:
+
+		LightDistribution const * distribution;
+		Scene const * scene;
+
+	public:
+
+		LiTechnique();
+
+		virtual void init(Scene const& scene, LightDistribution const& distrib) override;
+
+		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
+
+		virtual Float pdf(const SurfaceInteraction& ref, Vector3f const& wi) const final override;
 
 	};
 
@@ -50,15 +79,18 @@ namespace pbrt
 	// which is not possible only in the Li function (without some dirty things).
 	// We could make this class fit in the SamplerIntegrator by adding something like a 
 	// pixelPreprocess and pixelPostprocess functions.
-	class PathOptiIntegrator : Integrator
+	class PathOptiIntegrator : public Integrator
 	{
-	protected:
-
+	public:
+		
 		struct Technique
 		{
-			LightSamplingTechnique* technique;
+			std::shared_ptr<LightSamplingTechnique> technique;
 			int n = 1;
 		};
+	
+	protected:
+
 
 		const int maxDepth;
 		
@@ -86,11 +118,14 @@ namespace pbrt
 			std::shared_ptr<Sampler> sampler,
 			const Bounds2i& pixelBounds,
 			MIS::Heuristic h,
+			std::vector<Technique> const& techniques,
 			const std::string& lightSampleStrategy = "spatial");
 
 		virtual ~PathOptiIntegrator();
 
 		void Preprocess(const Scene& scene, Sampler& sampler);
+
+		void directLighting(SurfaceInteraction const& isect, Scene const& scene, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const;
 
 		// Returns the contribution of not computed with MIS, i.e. directly visibible lights (depth = 0)
 		Spectrum TracePath(const RayDifferential& ray, const Scene& scene, Sampler& sampler, MemoryArena& arena, EstimatorPtr* estimators, Float* wbuffer, Spectrum beta=1, int depth = 0) const;
