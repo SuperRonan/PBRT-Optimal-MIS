@@ -35,6 +35,7 @@ namespace pbrt
 
 		struct Sample
 		{
+			Type type;
 			VisibilityTester vis;
 			const Light* light;
 			Vector3f wi;
@@ -48,7 +49,7 @@ namespace pbrt
 
 		virtual void sample(const SurfaceInteraction & ref, Float lambda, Point2f const& xi, Sample& sample) const = 0;
 
-		virtual Float pdf(const SurfaceInteraction& ref, Vector3f const& wi) const = 0;
+		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sammple) const = 0;
 
 	};
 
@@ -58,6 +59,7 @@ namespace pbrt
 	protected:
 
 		LightDistribution const * distribution;
+		std::unordered_map<const Light*, size_t> lightToIndex;
 		Scene const * scene;
 
 	public:
@@ -68,7 +70,7 @@ namespace pbrt
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
-		virtual Float pdf(const SurfaceInteraction& ref, Vector3f const& wi) const final override;
+		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
 
 	};
 

@@ -20,11 +20,15 @@ namespace pbrt
 	{
 		distribution = &distrib;
 		this->scene = &scene;
+		for (size_t i = 0; i < scene.lights.size(); ++i)
+		{
+			lightToIndex[scene.lights[i].get()] = i;
+		}
 	}
 
 	void LiTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
 	{
-		const Distribution1D * distrib = distribution->Lookup(Point3f{ 0, 0, 0 });
+		const Distribution1D * distrib = distribution->Lookup(ref.p);
 		Float light_pdf;
 		int light_index = distrib->SampleDiscrete(lambda, &light_pdf);
 		const std::shared_ptr<Light>& light = scene->lights[light_index];
@@ -35,13 +39,17 @@ namespace pbrt
 		{
 			sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
 		}
+		sample.type = this->type;
 	}
 
-	Float LiTechnique::pdf(const SurfaceInteraction& ref, Vector3f const& wi) const
+	Float LiTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
 	{
-		const Distribution1D* distrib = distribution->Lookup(Point3f{ 0, 0, 0 });
-		Float light_pdf;
-		return 0;
+		const Distribution1D* distrib = distribution->Lookup(ref.p);
+		const size_t light_id = lightToIndex.find(sample.light)->second;
+		Float light_pdf = distrib->DiscretePDF(light_id);
+		// wi is not enough, what there are multiple points on the light in the direction of wi
+		Float p = sample.light->Pdf_Li(ref, sample.wi);
+		return p * light_pdf;
 	}
 
 
@@ -261,11 +269,11 @@ namespace pbrt
 	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
 	{
 		using Sample = LightSamplingTechnique::Sample;
-		int N = techniques.size();
+		const int N = techniques.size();
 		for (int i = 0; i < N; ++i)
 		{
 			LightSamplingTechnique& technique = *techniques[i].technique;
-			int ni = techniques[i].n;
+			const int ni = techniques[i].n;
 			for (int j = 0; j < ni; ++j)
 			{
 				Point2f xi = sampler.Get2D();
@@ -281,7 +289,7 @@ namespace pbrt
 				// visibility test (for gathering techniques)
 				Spectrum visibility = sample.vis.Tr(scene, sampler);
 				bool V = !visibility.IsBlack();
-				Spectrum estimate = sample.estimate * visibility;
+				Spectrum estimate = sample.estimate * visibility / Float(ni);
 				// Use the weights buffer to tmporarily store the PDFs
 				Float sum = sample.pdf;
 				Float*& pdfs = wbuffer;
@@ -290,7 +298,7 @@ namespace pbrt
 				{
 					if (l != i)
 					{
-						Float pdf = techniques[l].technique->pdf(it, sample.wi);
+						Float pdf = techniques[l].technique->pdf(it, sample);
 						pdfs[l] = pdf;
 						sum += pdf;
 					}

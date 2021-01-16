@@ -57,26 +57,33 @@ def sampler_str(n):
 def integrator_string(integrator_name, min_depth, max_depth, heuristic):
 	return 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s"' % (integrator_name, max_depth, min_depth, heuristic)
 
+def techniques_string(techniques):
+	res = ''
+	for tech in techniques:
+		tech_str = ' "integer %s" [ %d ]' % tech
+		res += tech_str
+	return res
+
+def techniques_name(techniques):
+	res = ''
+	for tech in techniques:
+		tech_str = '_%s%d' % tech
+		res += tech_str
+	return res
+
 def integrator_str(options, min_depth, max_depth, max_opti_depth):
-	return integrator_string(options[0], min_depth, max_depth, options[1])
-
-def set_integrator(scene, integrator_str):
-	start = '##INTEGRATOR-DEF-START'
-	end = '##INTEGRATOR-DEF-END'
-	replacement = integrator_str
-	match = re.match(r'(.+%s\s*).+?(\s*%s.+)' % (start, end), scene, re.DOTALL)
-	return match.group(1) + replacement + match.group(2)
-
-def set_number_of_samples(scene, n):
-	start = '##SAMPLER-DEF-START'
-	end = '##SAMPLER-DEF-END'
-	replacement = sampler_str(n)
-	match = re.match(r'(.+%s\s*).+?(\s*%s.+)' % (start, end), scene, re.DOTALL)
-	return match.group(1) + replacement + match.group(2)
+	res = integrator_string(options[0], min_depth, max_depth, options[1])
+	if options[0] == 'opath' and len(options) >= 3:
+		techniques = options[2]
+		print(techniques)
+		res += techniques_string(techniques)
+	return res
 
 def filter_name(options):
 	res = options[0]
-	if res == 'obdpt':
-		res = options[1]
+	if options[0] == 'obdpt' or options[0] == 'opath':
+		res += '_' + options[1]
+	if options[0] == 'opath' and len(options) >= 3:
+		res += techniques_name(options[2]) 
 	return res
 

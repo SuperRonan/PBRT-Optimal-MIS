@@ -57,16 +57,19 @@ scenes = [
 # Select your integrator
 # options: (name, heuristic, extra)
 exec_filters = [
-	#('path', '', ''),			# path tracer
-	#("light", '', ''),			# light tracer (to reimplement)
-	#('bdpt', '', ''),			# bdpt (vanilla)
+	#('path', ''),
+	#("light", ''),			# light tracer (to reimplement)
+	#('bdpt', ''),
 
-	#('obdpt', 'balance', ''),	# obdpt - balance
-	('obdpt', 'power', ''),		# obdpt - power
-	('obdpt', 'cutoff', ''),	# obdpt - cutoff
-	('obdpt', 'maximum', ''),	# obdpt - maximum
-	#('obdpt', 'naive', ''),		# obdpt - naive
-	('obdpt', 'direct', ''),	# obdpt - direct
+	#('obdpt', 'balance'),
+	#('obdpt', 'power'),	
+	#('obdpt', 'cutoff'),	
+	#('obdpt', 'maximum'),
+	#('obdpt', 'naive'),	
+	#('obdpt', 'direct'),	
+
+	('opath', 'balance', [('Li', 16)]),
+	('opath', 'balance', [('Li', 256)]),
 ]
 
 
@@ -98,7 +101,7 @@ min_max= [
 	#(7, 7),
 ]
 
-# Select your number of samples
+# Select your number of samples (or passes to be more accurate)
 numbers_of_samples = [
 	#1,
 	#2,
