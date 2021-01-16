@@ -7,16 +7,15 @@
 
 namespace pbrt
 {
-
-	LightSamplingTechnique::LightSamplingTechnique(Type tyupe):
+	LightSamplingTechnique::LightSamplingTechnique(Type type):
 		type(type)
 	{}
-
-	LiTechnique::LiTechnique() :
+	
+	GatheringTechnique::GatheringTechnique():
 		LightSamplingTechnique(Type::Gathering)
 	{}
 
-	void LiTechnique::init(Scene const& scene, LightDistribution const& distrib)
+	void GatheringTechnique::init(Scene const& scene, LightDistribution const& distrib)
 	{
 		distribution = &distrib;
 		this->scene = &scene;
@@ -26,14 +25,32 @@ namespace pbrt
 		}
 	}
 
-	void LiTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	void GatheringTechnique::selectLight(const SurfaceInteraction& ref, Float lambda, const Light*& light, Float& pdf)const
 	{
 		const Distribution1D * distrib = distribution->Lookup(ref.p);
+		int light_index = distrib->SampleDiscrete(lambda, &pdf);
+		const std::shared_ptr<Light>& _light = scene->lights[light_index];
+		light = _light.get();
+	}
+
+	Float GatheringTechnique::pdfSelectLight(const SurfaceInteraction& ref, const Light* light)const
+	{
+		const Distribution1D* distrib = distribution->Lookup(ref.p);
+		const size_t light_id = lightToIndex.find(light)->second;
+		Float light_pdf = distrib->DiscretePDF(light_id);
+		return light_pdf;
+	}
+
+	LiTechnique::LiTechnique() :
+		GatheringTechnique()
+	{}
+
+	void LiTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	{
 		Float light_pdf;
-		int light_index = distrib->SampleDiscrete(lambda, &light_pdf);
-		const std::shared_ptr<Light>& light = scene->lights[light_index];
-		sample.light = light.get();
-		sample.estimate = light->Sample_Li(ref, xi, &sample.wi, &sample.pdf, &sample.vis);
+		selectLight(ref, lambda, sample.light, light_pdf);
+
+		sample.estimate = sample.light->Sample_Li(ref, xi, &sample.wi, &sample.pdf, &sample.vis);
 		sample.pdf *= light_pdf;
 		if (!sample.estimate.IsBlack() && sample.pdf != 0)
 		{
@@ -44,10 +61,9 @@ namespace pbrt
 
 	Float LiTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
 	{
-		const Distribution1D* distrib = distribution->Lookup(ref.p);
-		const size_t light_id = lightToIndex.find(sample.light)->second;
-		Float light_pdf = distrib->DiscretePDF(light_id);
+		Float light_pdf = pdfSelectLight(ref, sample.light);
 		// wi is not enough, what there are multiple points on the light in the direction of wi
+		// It was enough for the previous use cases (no need to compute the PDF of zero contribution samples)
 		Float p = sample.light->Pdf_Li(ref, sample.wi);
 		return p * light_pdf;
 	}

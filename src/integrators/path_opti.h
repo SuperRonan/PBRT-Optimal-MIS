@@ -53,20 +53,34 @@ namespace pbrt
 
 	};
 
-	// TODO make an intermediate Type GatheringTechnique
-	class LiTechnique : public LightSamplingTechnique
+	class GatheringTechnique : public LightSamplingTechnique
 	{
 	protected:
-
+		
 		LightDistribution const * distribution;
 		std::unordered_map<const Light*, size_t> lightToIndex;
 		Scene const * scene;
 
 	public:
 
-		LiTechnique();
+		GatheringTechnique();
 
 		virtual void init(Scene const& scene, LightDistribution const& distrib) override;
+
+		void selectLight(const SurfaceInteraction& ref, Float lambda, const Light*& light, Float& pdf) const;
+
+		Float pdfSelectLight(const SurfaceInteraction& ref, const Light* light) const;
+	};
+
+	// TODO make an intermediate Type GatheringTechnique
+	class LiTechnique : public GatheringTechnique
+	{
+	protected:
+
+
+	public:
+
+		LiTechnique();
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
