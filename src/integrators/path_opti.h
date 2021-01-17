@@ -72,12 +72,8 @@ namespace pbrt
 		Float pdfSelectLight(const SurfaceInteraction& ref, const Light* light) const;
 	};
 
-	// TODO make an intermediate Type GatheringTechnique
 	class LiTechnique : public GatheringTechnique
 	{
-	protected:
-
-
 	public:
 
 		LiTechnique();
@@ -85,7 +81,17 @@ namespace pbrt
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
 		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
+	};
 
+	class LeTechnique : public GatheringTechnique
+	{
+	public:
+
+		LeTechnique();
+
+		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
+
+		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
 	};
 
 

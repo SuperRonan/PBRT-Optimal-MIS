@@ -69,9 +69,40 @@ namespace pbrt
 	}
 
 
+	LeTechnique::LeTechnique() :
+		GatheringTechnique()
+	{}
 
+	void LeTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	{
+		Float light_pdf;
+		selectLight(ref, lambda, sample.light, light_pdf);
+		Ray ray; Normal3f nlight; Float pdfDir, pdfA;
+		sample.estimate = sample.light->Sample_Le(xi, xi, ref.time, &ray, &nlight, &pdfA, &pdfDir);
+		// convert to solid angle density
+		Float conversion = /*AbsDot(ray.d, nlight)*/ 1.0 / (ref.p - ray.o).LengthSquared();
+		sample.pdf = pdfA * conversion;
+		sample.pdf *= conversion;
+		sample.wi = ray.d;
+		Interaction it = Interaction(ray.o, ref.time, sample.light->mediumInterface);
+		sample.vis = VisibilityTester(ref, it);
+		sample.pdf *= light_pdf;
+		if (!sample.estimate.IsBlack() && sample.pdf != 0)
+		{
+			sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
+		}
+		sample.type = this->type;
+	}
 
-
+	Float LeTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
+	{
+		// TODO
+		Float light_pdf = pdfSelectLight(ref, sample.light);
+		// wi is not enough, what there are multiple points on the light in the direction of wi
+		// It was enough for the previous use cases (no need to compute the PDF of zero contribution samples)
+		Float p = sample.light->Pdf_Li(ref, sample.wi);
+		return p * light_pdf;
+	}
 
 
 
@@ -379,6 +410,15 @@ namespace pbrt
 			liTech.n = n_Li;
 			liTech.technique = std::make_shared<LiTechnique>();
 			techs.push_back(liTech);
+		}
+
+		int n_Le = params.FindOneInt("Le", 0);
+		if (n_Le)
+		{
+			PathOptiIntegrator::Technique leTech;
+			leTech.n = n_Le;
+			leTech.technique = std::make_shared<LeTechnique>();
+			techs.push_back(leTech);
 		}
 
 		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 
