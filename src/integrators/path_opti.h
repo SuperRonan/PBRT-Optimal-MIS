@@ -94,6 +94,31 @@ namespace pbrt
 		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
 	};
 
+	class SplattingTechnique : public LightSamplingTechnique
+	{
+	public:
+
+		SplattingTechnique();
+
+	};
+
+	class BSDFTechnique : public SplattingTechnique
+	{
+	protected:
+
+		Scene const* scene;
+
+	public:
+
+		BSDFTechnique();
+
+		virtual void init(Scene const& scene, LightDistribution const&) override final;
+
+		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
+
+		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
+	};
+
 
 
 	// Though its behaviour is very close to fit in a SamplerIntegrator like the classic Path

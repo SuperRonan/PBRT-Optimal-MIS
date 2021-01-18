@@ -16,7 +16,7 @@ num_threads = 16
 scenes = [
 	#['./scenes/simple-env.pbrt', 'simple-env'], # this scene contains an environment map
 	#['./scenes/simple-area.pbrt', 'simple-area'],
-	#['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
+	['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
 	#['./scenes/box-glossy.pbrt', 'box-glossy'], # a closed cornell box with glossy materials on the cubes
 	#['./scenes/box-phong.pbrt', 'box-phong'],
 	#['./scenes/box-mirror.pbrt', 'box-mirror'], # a closed cornell box with mirrors on the cubes
@@ -35,7 +35,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
-	[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
+	#[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-night.pbrt', 'pavilion-night'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-day.pbrt', 'pavilion-day'],
 	#[pbrt_scenes_folder + 'breakfast/breakfast.pbrt', 'breakfast'],
@@ -68,7 +68,7 @@ exec_filters = [
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct'),	
 
-	('opath', 'balance', [('Li', 1)]),
+	('opath', 'balance', [('BSDF', 1)]),
 ]
 
 

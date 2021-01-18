@@ -104,6 +104,40 @@ namespace pbrt
 		return p * light_pdf;
 	}
 
+	SplattingTechnique::SplattingTechnique():
+		LightSamplingTechnique(Type::Splatting)
+	{}
+
+	BSDFTechnique::BSDFTechnique():
+		SplattingTechnique()
+	{}
+
+	void BSDFTechnique::init(Scene const& scene, LightDistribution const&)
+	{
+		this->scene = &scene;
+	}
+
+	void BSDFTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	{
+		sample.estimate = 0;
+		sample.type = this->type;
+		Spectrum fs = ref.bsdf->Sample_f(ref.wo, &sample.wi, xi, &sample.pdf);
+		fs *= AbsDot(sample.wi, ref.shading.n);
+
+		SurfaceInteraction lightIsect;
+		Ray ray = ref.SpawnRay(sample.wi);
+		bool foundIntersection = scene->Intersect(ray, &lightIsect);
+		if (foundIntersection)
+		{
+			sample.estimate = fs * lightIsect.Le(-sample.wi) / sample.pdf;
+		}
+		sample.vis = VisibilityTester(ref, lightIsect);
+	}
+
+	Float BSDFTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const
+	{
+		return 0;
+	}
 
 
 	PathOptiIntegrator::PathOptiIntegrator(
@@ -419,6 +453,15 @@ namespace pbrt
 			leTech.n = n_Le;
 			leTech.technique = std::make_shared<LeTechnique>();
 			techs.push_back(leTech);
+		}
+
+		int n_bsdf = params.FindOneInt("BSDF", 0);
+		if (n_bsdf)
+		{
+			PathOptiIntegrator::Technique bsdfTech;
+			bsdfTech.n = n_bsdf;
+			bsdfTech.technique = std::make_shared<BSDFTechnique>();
+			techs.push_back(bsdfTech);
 		}
 
 		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 
