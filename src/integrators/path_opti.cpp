@@ -61,11 +61,15 @@ namespace pbrt
 
 	Float LiTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
 	{
-		Float light_pdf = pdfSelectLight(ref, sample.light);
-		// wi is not enough, what there are multiple points on the light in the direction of wi
-		// It was enough for the previous use cases (no need to compute the PDF of zero contribution samples)
-		Float p = sample.light->Pdf_Li(ref, sample.wi);
-		return p * light_pdf;
+		if (sample.light)
+		{
+			Float light_pdf = pdfSelectLight(ref, sample.light);
+			// wi is not enough, what there are multiple points on the light in the direction of wi
+			// It was enough for the previous use cases (no need to compute the PDF of zero contribution samples)
+			Float p = sample.light->Pdf_Li(ref, sample.wi);
+			return p * light_pdf;
+		}
+		return 0;
 	}
 
 
@@ -130,13 +134,14 @@ namespace pbrt
 		if (foundIntersection)
 		{
 			sample.estimate = fs * lightIsect.Le(-sample.wi) / sample.pdf;
+			sample.light = lightIsect.primitive->GetAreaLight();
 		}
 		sample.vis = VisibilityTester(ref, lightIsect);
 	}
 
 	Float BSDFTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const
 	{
-		return 0;
+		return ref.bsdf->Pdf(ref.wo, sample.wi);
 	}
 
 
@@ -183,7 +188,11 @@ namespace pbrt
 				for (int j = 0; j < estimators.size(); ++j)
 				{
 					Estimator*& estimator = estimators[j];
-					estimator = MIS::createEstimator<Spectrum, Float>(heuristic, N);
+					estimator = MIS::createEstimator<Spectrum, Float>(heuristic, N); 
+					for (int i = 0; i < N; ++i)
+					{
+						estimator->setSampleForTechnique(i, techniques[i].n);
+					}
 				}
 			}, threads);
 
@@ -353,7 +362,7 @@ namespace pbrt
 		const int N = techniques.size();
 		for (int i = 0; i < N; ++i)
 		{
-			LightSamplingTechnique& technique = *techniques[i].technique;
+			const LightSamplingTechnique& technique = *techniques[i].technique;
 			const int ni = techniques[i].n;
 			for (int j = 0; j < ni; ++j)
 			{

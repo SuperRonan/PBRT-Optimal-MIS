@@ -68,7 +68,9 @@ exec_filters = [
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct'),	
 
-	('opath', 'balance', [('BSDF', 1)]),
+	#('opath', 'balance', [('BSDF', 1), ("Li", 2)]),
+	('opath', 'power', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'direct', [('BSDF', 2), ("Li", 1)]),
 ]
 
 

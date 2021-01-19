@@ -67,7 +67,7 @@ def techniques_string(techniques):
 def techniques_name(techniques):
 	res = ''
 	for tech in techniques:
-		tech_str = '_%s%d' % tech
+		tech_str = '_%s_%d' % tech
 		res += tech_str
 	return res
 
