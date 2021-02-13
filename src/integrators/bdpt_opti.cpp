@@ -268,27 +268,18 @@ namespace pbrt {
                                 // Execute the $(s, t)$ connection strategy and
                                 // update _L_
                                 Point2f pFilmNew = pFilm;
-                                bool sparseZero = false;
+                                bool sparseZero = true;
                                 estimate = ConnectOBDPT(
                                     scene, lightVertices, cameraVertices, s, t,
                                     *lightDistr, lightToIndex, *camera, *tileSampler,
                                     &pFilmNew, balanceWeights, sparseZero);
 
-                                bool LTSampleOutside = (t == 1 && !Inside(pFilmNew, Bounds2f(sampleBounds)));
-                                if (LTSampleOutside)
-                                {
-                                    sparseZero = true;
-                                }
                                 if (!sparseZero)
                                 {
                                     auto* estimator = estimators[(s + t - 2)];
                                     // This is maybe not very clever, since the inverse is done in the addEstimate...
                                     Float u = pFilmNew.x / sampleExtent.x;
                                     Float v = pFilmNew.y / sampleExtent.y;
-                                    if (estimate.HasNaNs() || estimate.HasInf())
-                                    {
-                                        int i = 0;
-                                    }
                                     estimator->addEstimate(estimate, balanceWeights, s, u, v);
                                 }
                                 
@@ -334,18 +325,19 @@ namespace pbrt {
         }
     }
 
+    // This function also needs to prove that the sample is not sparse zero
     Spectrum ConnectOBDPT(
         const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
         int t, const Distribution1D& lightDistr,
         const std::unordered_map<const Light*, size_t>& lightToIndex,
         const Camera& camera, Sampler& sampler, Point2f* pRaster,
-        Float* balance_weights, bool& sparseZero) {
+        Float* balance_weights, bool& sparseZero) 
+    {
         ProfilePhase _(Prof::BDPTConnectSubpaths);
         Spectrum L(0.f);
         // Ignore invalid connections related to infinite area lights
         if (t > 1 && s != 0 && cameraVertices[t - 1].type == VertexType::Light)
         {
-            sparseZero = true;
             return 0;
         }
         Float s1Pdf;
@@ -357,9 +349,10 @@ namespace pbrt {
             if (pt.IsLight()) {
                 L = pt.Le(scene, cameraVertices[t - 2]) * pt.beta;
                 s1Pdf = cameraVertices[t - 1].PdfResampledLight(scene, cameraVertices[t - 2], lightDistr, lightToIndex);
+                sparseZero = false;
             }
             else
-                sparseZero = true;
+                return 0;
             DCHECK(!L.HasNaNs());
         }
         else if (t == 1) {
@@ -382,14 +375,9 @@ namespace pbrt {
                     // make a non-zero contribution.
                     Spectrum V = vis.Tr(scene, sampler);
                     L *= V;
-                    if (V.IsBlack())
-                        sparseZero = true;
+                    sparseZero = V.IsBlack();
                 }
-                else
-                    sparseZero = true;
             }
-            else
-                sparseZero = true;
         }
         else if (s == 1) {
             // Sample a point on a light and connect it to the camera subpath
@@ -417,14 +405,9 @@ namespace pbrt {
                     // Only check visibility if the path would carry radiance.
                     Spectrum V = vis.Tr(scene, sampler);
                     L *= V;
-                    if (V.IsBlack())
-                        sparseZero = true;
+                    sparseZero = V.IsBlack();
                 }
-                else
-                    sparseZero = true;
             }
-            else
-                sparseZero = true;
         }
         else {
             // Handle all other bidirectional connection cases
@@ -437,11 +420,8 @@ namespace pbrt {
                     ", dist^2: " << DistanceSquared(qs.p(), pt.p());
                 Spectrum geometry = G(scene, sampler, qs, pt);
                 L *= geometry;
-                if (geometry.IsBlack())
-                    sparseZero = true;
+                sparseZero = geometry.IsBlack();
             }
-            else
-                sparseZero = true;
         }
         if (s >= 2)
             s1Pdf = lightVertices[0].PdfResampledLight(scene, lightVertices[1], lightDistr, lightToIndex);
@@ -456,7 +436,7 @@ namespace pbrt {
             BalanceWeights(scene, lightVertices, cameraVertices,
                 sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights, sparseZero);
         }
-        
+        if (sparseZero) L = 0;
         return L;
     }
 
