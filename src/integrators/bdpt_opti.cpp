@@ -175,32 +175,11 @@ namespace pbrt {
         const int tileSize = 16;
         const int nXTiles = (sampleExtent.x + tileSize - 1) / tileSize;
         const int nYTiles = (sampleExtent.y + tileSize - 1) / tileSize;
-        ProgressReporter reporter(nXTiles * nYTiles, "Rendering");
 
-        // Allocate buffers for debug visualization
-        const int bufferCount = (1 + maxDepth) * (6 + maxDepth) / 2;
-        std::vector<std::unique_ptr<Film>> weightFilms(bufferCount);
-        if (visualizeStrategies || visualizeWeights) {
-            for (int depth = 0; depth <= maxDepth; ++depth) {
-                for (int s = 0; s <= depth + 2; ++s) {
-                    int t = depth + 2 - s;
-                    if (t == 0 || (s == 1 && t == 1)) continue;
-
-                    std::string filename =
-                        StringPrintf("bdpt_d%02i_s%02i_t%02i.exr", depth, s, t);
-
-                    weightFilms[BufferIndex(s, t)] = std::unique_ptr<Film>(new Film(
-                        film->fullResolution,
-                        Bounds2f(Point2f(0, 0), Point2f(1, 1)),
-                        std::unique_ptr<Filter>(CreateBoxFilter(ParamSet())),
-                        film->diagonal * 1000, filename, 1.f));
-                }
-            }
-        }
+        
 
         // Render and write the output image to disk
         if (scene.lights.size() > 0) {
-
             const bool USE_ROW_MAJOR = true;
             std::vector<MIS::ImageEstimator<Spectrum, Float, USE_ROW_MAJOR>*> estimators;
             estimators.reserve(maxDepth + 1);
@@ -212,117 +191,117 @@ namespace pbrt {
                 estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(heuristic, N, width, height));
                 estimators.back()->setSampleForTechnique(N - 1, width * height);
             }
-
-            ParallelFor2D([&](const Point2i tile) {
-                // Render a single tile using BDPT
-                MemoryArena arena;
-                int seed = tile.y * nXTiles + tile.x;
-                std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
-                int x0 = sampleBounds.pMin.x + tile.x * tileSize;
-                int x1 = std::min(x0 + tileSize, sampleBounds.pMax.x);
-                int y0 = sampleBounds.pMin.y + tile.y * tileSize;
-                int y1 = std::min(y0 + tileSize, sampleBounds.pMax.y);
-                Bounds2i tileBounds(Point2i(x0, y0), Point2i(x1, y1));
-                LOG(INFO) << "Starting image tile " << tileBounds;
-
-                std::unique_ptr<FilmTile> filmTile =
-                    camera->film->GetFilmTile(tileBounds);
-                for (Point2i pPixel : tileBounds) {
-                    tileSampler->StartPixel(pPixel);
-                    if (!InsideExclusive(pPixel, pixelBounds))
-                        continue;
-                    do {
-                        // Generate a single sample using BDPT
-                        Point2f pFilm = (Point2f)pPixel + tileSampler->Get2D();
-
-                        // Trace the camera subpath
-                        Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
-                        Vertex* lightVertices = arena.Alloc<Vertex>(maxDepth + 1);
-                        Float* balanceWeights = arena.Alloc<Float>(maxDepth + 2);
-                        int nCamera = GenerateCameraSubpath(
-                            scene, *tileSampler, arena, maxDepth + 2, *camera,
-                            pFilm, cameraVertices);
-                        // Get a distribution for sampling the light at the
-                        // start of the light subpath. Because the light path
-                        // follows multiple bounces, basing the sampling
-                        // distribution on any of the vertices of the camera
-                        // path is unlikely to be a good strategy. We use the
-                        // PowerLightDistribution by default here, which
-                        // doesn't use the point passed to it.
-                        const Distribution1D* lightDistr =
-                            lightDistribution->Lookup(cameraVertices[0].p());
-                        // Now trace the light subpath
-                        int nLight = GenerateLightSubpath(
-                            scene, *tileSampler, arena, maxDepth + 1,
-                            cameraVertices[0].time(), *lightDistr, lightToIndex,
-                            lightVertices);
-
-                        // Execute all BDPT connection strategies
-                        Spectrum estimate(0.f);
-                        for (int t = 1; t <= nCamera; ++t) {
-                            for (int s = 0; s <= nLight; ++s) {
-                                int depth = t + s - 2;
-                                if ((s == 1 && t == 1) || depth < 0 ||
-                                    depth > maxDepth)
-                                    continue;
-                                // Execute the $(s, t)$ connection strategy and
-                                // update _L_
-                                Point2f pFilmNew = pFilm;
-                                bool sparseZero = true;
-                                estimate = ConnectOBDPT(
-                                    scene, lightVertices, cameraVertices, s, t,
-                                    *lightDistr, lightToIndex, *camera, *tileSampler,
-                                    &pFilmNew, balanceWeights, sparseZero);
-
-                                if (!sparseZero)
-                                {
-                                    auto* estimator = estimators[(s + t - 2)];
-                                    // This is maybe not very clever, since the inverse is done in the addEstimate...
-                                    Float u = pFilmNew.x / sampleExtent.x;
-                                    Float v = pFilmNew.y / sampleExtent.y;
-                                    estimator->addEstimate(estimate, balanceWeights, s, u, v);
-                                }
-                                
-                            }
-                        }
-                        //VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
-                        //    ", (y: " << L.y() << ")";
-                        //filmTile->AddSample(pFilm, L);
-                        arena.Reset();
-                    } while (tileSampler->StartNextSample());
-                }
-                //film->MergeFilmTile(std::move(filmTile));
-                reporter.Update();
-                LOG(INFO) << "Finished image tile " << tileBounds;
-                }, Point2i(nXTiles, nYTiles));
-            
-            std::vector<Spectrum> buffer(sampleExtent.x* sampleExtent.y, Spectrum(0));
-            for (int depth = 0; depth <= maxDepth; ++depth)
             {
-                auto* estimator = estimators[depth];
-                estimator->solve(buffer.data(), sampler->samplesPerPixel);
-            }
+                ProgressReporter reporter(nXTiles * nYTiles, "Drawing Samples");
 
-            estimators[0]->loopThroughImage([&film, &buffer, &estimators](int i, int j)
+                ParallelFor2D([&](const Point2i tile) {
+                    // Render a single tile using BDPT
+                    MemoryArena arena;
+                    int seed = tile.y * nXTiles + tile.x;
+                    std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
+                    int x0 = sampleBounds.pMin.x + tile.x * tileSize;
+                    int x1 = std::min(x0 + tileSize, sampleBounds.pMax.x);
+                    int y0 = sampleBounds.pMin.y + tile.y * tileSize;
+                    int y1 = std::min(y0 + tileSize, sampleBounds.pMax.y);
+                    Bounds2i tileBounds(Point2i(x0, y0), Point2i(x1, y1));
+                    LOG(INFO) << "Starting image tile " << tileBounds;
+
+                    std::unique_ptr<FilmTile> filmTile =
+                        camera->film->GetFilmTile(tileBounds);
+                    for (Point2i pPixel : tileBounds) {
+                        tileSampler->StartPixel(pPixel);
+                        if (!InsideExclusive(pPixel, pixelBounds))
+                            continue;
+                        do {
+                            // Generate a single sample using BDPT
+                            Point2f pFilm = (Point2f)pPixel + tileSampler->Get2D();
+
+                            // Trace the camera subpath
+                            Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
+                            Vertex* lightVertices = arena.Alloc<Vertex>(maxDepth + 1);
+                            Float* balanceWeights = arena.Alloc<Float>(maxDepth + 2);
+                            int nCamera = GenerateCameraSubpath(
+                                scene, *tileSampler, arena, maxDepth + 2, *camera,
+                                pFilm, cameraVertices);
+                            // Get a distribution for sampling the light at the
+                            // start of the light subpath. Because the light path
+                            // follows multiple bounces, basing the sampling
+                            // distribution on any of the vertices of the camera
+                            // path is unlikely to be a good strategy. We use the
+                            // PowerLightDistribution by default here, which
+                            // doesn't use the point passed to it.
+                            const Distribution1D* lightDistr =
+                                lightDistribution->Lookup(cameraVertices[0].p());
+                            // Now trace the light subpath
+                            int nLight = GenerateLightSubpath(
+                                scene, *tileSampler, arena, maxDepth + 1,
+                                cameraVertices[0].time(), *lightDistr, lightToIndex,
+                                lightVertices);
+
+                            // Execute all BDPT connection strategies
+                            Spectrum estimate(0.f);
+                            for (int t = 1; t <= nCamera; ++t) {
+                                for (int s = 0; s <= nLight; ++s) {
+                                    int depth = t + s - 2;
+                                    if ((s == 1 && t == 1) || depth < 0 ||
+                                        depth > maxDepth)
+                                        continue;
+                                    // Execute the $(s, t)$ connection strategy and
+                                    // update _L_
+                                    Point2f pFilmNew = pFilm;
+                                    bool sparseZero = true;
+                                    estimate = ConnectOBDPT(
+                                        scene, lightVertices, cameraVertices, s, t,
+                                        *lightDistr, lightToIndex, *camera, *tileSampler,
+                                        &pFilmNew, balanceWeights, sparseZero);
+
+                                    if (!sparseZero)
+                                    {
+                                        auto* estimator = estimators[(s + t - 2)];
+                                        // This is maybe not very clever, since the inverse is done in the addEstimate...
+                                        Float u = pFilmNew.x / sampleExtent.x;
+                                        Float v = pFilmNew.y / sampleExtent.y;
+                                        estimator->addEstimate(estimate, balanceWeights, s, u, v);
+                                    }
+
+                                }
+                            }
+                            //VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
+                            //    ", (y: " << L.y() << ")";
+                            //filmTile->AddSample(pFilm, L);
+                            arena.Reset();
+                        } while (tileSampler->StartNextSample());
+                    }
+                    //film->MergeFilmTile(std::move(filmTile));
+                    reporter.Update();
+                    LOG(INFO) << "Finished image tile " << tileBounds;
+                    }, Point2i(nXTiles, nYTiles));
+                reporter.Done();
+            }   
+            {
+                ProgressReporter reporter(maxDepth, "Solving");
+                std::vector<Spectrum> buffer(sampleExtent.x * sampleExtent.y, Spectrum(0));
+                for (int depth = 0; depth <= maxDepth; ++depth)
                 {
-                    Point2f p(i + 0.5, j + 0.5);
-                    film->AddSplat(p, buffer[estimators[0]->pixelTo1D(i, j)]);
-                });
+                    auto* estimator = estimators[depth];
+                    estimator->solve(buffer.data(), sampler->samplesPerPixel);
+                    reporter.Update();
+                }
+
+                estimators[0]->loopThroughImage([&film, &buffer, &estimators](int i, int j)
+                    {
+                        Point2f p(i + 0.5, j + 0.5);
+                        film->AddSplat(p, buffer[estimators[0]->pixelTo1D(i, j)]);
+                    });
+                reporter.Done();
+            }
             for (int depth = 0; depth <= maxDepth; ++depth)
                 delete estimators[depth];
 
-            reporter.Done();
-        }
+        } // if scene has lights
         
 
         film->WriteImage();
-
-        // Write buffers for debug visualization
-        if (visualizeStrategies || visualizeWeights) {
-            const Float invSampleCount = 1.0f / sampler->samplesPerPixel;
-            for (size_t i = 0; i < weightFilms.size(); ++i)
-                if (weightFilms[i]) weightFilms[i]->WriteImage(invSampleCount);
-        }
     }
 
     // This function also needs to prove that the sample is not sparse zero
