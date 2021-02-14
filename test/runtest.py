@@ -16,7 +16,7 @@ num_threads = 16
 scenes = [
 	#['./scenes/simple-env.pbrt', 'simple-env'], # this scene contains an environment map
 	#['./scenes/simple-area.pbrt', 'simple-area'],
-	['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
+	#['./scenes/box.pbrt', 'box'], # a closed cornell box (diffuse)
 	#['./scenes/box-glossy.pbrt', 'box-glossy'], # a closed cornell box with glossy materials on the cubes
 	#['./scenes/box-phong.pbrt', 'box-phong'],
 	#['./scenes/box-mirror.pbrt', 'box-mirror'], # a closed cornell box with mirrors on the cubes
@@ -31,7 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
-	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
@@ -50,7 +50,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
-	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'moto'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 ]
 
@@ -66,10 +66,10 @@ exec_filters = [
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	#('obdpt', 'direct'),	
+	('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 2)]),
-	('opath', 'power', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('BSDF', 2), ("Li", 1)]),
 ]
 
@@ -79,9 +79,10 @@ min_max= [
 	#(2, 2),
 	#(2, 3),
 	#(2, 4),
-	(2, 5, 5),
+	#(2, 5, 5),
 	#(2, 6),
 	#(2, 7, 7),
+	(2, 7, 3),
 	#(2, 8),
 	#(2, 9),
 	#(2, 10),
@@ -143,7 +144,7 @@ for mm in min_max:
 		print(number_of_samples, " samples")  
 		for scene_info in scenes:
 			print(scene_info[1])
-			sub_folder = scene_info[1] + "_s%d_L%d_l%d/" % (number_of_samples, max_len, min_len)
+			sub_folder = scene_info[1] + "_s%d_l%d_l%d/" % (number_of_samples, max_len, min_len)
 
 			scene_path = scene_info[0]  
 			
@@ -157,7 +158,7 @@ for mm in min_max:
 				
 				pbrt_scene.makeTmp()
 
-				name = filter_name(exec_filter)
+				name = filter_name(exec_filter, max_opti_depth)
 				imgname = name + '.exr'
 				filenames.append(imgname)
 

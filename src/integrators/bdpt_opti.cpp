@@ -176,16 +176,15 @@ namespace pbrt {
         const int nXTiles = (sampleExtent.x + tileSize - 1) / tileSize;
         const int nYTiles = (sampleExtent.y + tileSize - 1) / tileSize;
 
-        
-
         // Render and write the output image to disk
         if (scene.lights.size() > 0) {
+            // Pre allocate estimators
             const bool USE_ROW_MAJOR = true;
             std::vector<MIS::ImageEstimator<Spectrum, Float, USE_ROW_MAJOR>*> estimators;
-            estimators.reserve(maxDepth + 1);
-            for (int depth = 0; depth <= maxDepth; ++depth)
+            estimators.reserve(maxOptiDepth - minDepth);
+            for (int depth = 1; depth <= maxOptiDepth; ++depth)
             {
-                int N = depth == 0 ? 1 : depth + 2;
+                int N = depth + 2;
                 int width = sampleExtent.x;
                 int height = sampleExtent.y;
                 estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(heuristic, N, width, height));
@@ -240,12 +239,14 @@ namespace pbrt {
 
                             // Execute all BDPT connection strategies
                             Spectrum estimate(0.f);
+                            Spectrum L = 0;
                             for (int t = 1; t <= nCamera; ++t) {
                                 for (int s = 0; s <= nLight; ++s) {
                                     int depth = t + s - 2;
                                     if ((s == 1 && t == 1) || depth < 0 ||
                                         depth > maxDepth)
                                         continue;
+                                    bool fallBackBalance = (depth == 0) || (depth > maxOptiDepth);
                                     // Execute the $(s, t)$ connection strategy and
                                     // update _L_
                                     Point2f pFilmNew = pFilm;
@@ -257,46 +258,60 @@ namespace pbrt {
 
                                     if (!sparseZero)
                                     {
-                                        auto* estimator = estimators[(s + t - 2)];
                                         // This is maybe not very clever, since the inverse is done in the addEstimate...
                                         Float u = pFilmNew.x / sampleExtent.x;
                                         Float v = pFilmNew.y / sampleExtent.y;
-                                        estimator->addEstimate(estimate, balanceWeights, s, u, v);
+                                        if (fallBackBalance)
+                                        {
+                                            Spectrum be = balanceWeights[s] * estimate;
+                                            if (t == 1)
+                                                film->AddSplat(pFilmNew, be / sampler->samplesPerPixel);
+                                            else
+                                                L += be;
+                                        }
+                                        else
+                                        {
+                                            auto* estimator = estimators[s + t - 3];
+                                            estimator->addEstimate(estimate, balanceWeights, s, u, v);
+                                        }
                                     }
 
-                                }
-                            }
+                                } // for s
+                            } // for s
                             //VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
                             //    ", (y: " << L.y() << ")";
-                            //filmTile->AddSample(pFilm, L);
+                            filmTile->AddSample(pFilm, L);
                             arena.Reset();
                         } while (tileSampler->StartNextSample());
                     }
-                    //film->MergeFilmTile(std::move(filmTile));
+                    film->MergeFilmTile(std::move(filmTile));
                     reporter.Update();
                     LOG(INFO) << "Finished image tile " << tileBounds;
                     }, Point2i(nXTiles, nYTiles));
                 reporter.Done();
             }   
             {
-                ProgressReporter reporter(maxDepth, "Solving");
+                // Can't launch the solve in parallelism yet
+                // It seems the threads are detained by pbrt
+                MIS::Parallel::init();
+                MIS::Parallel::setNumThreads(MaxThreadIndex());
+                ProgressReporter reporter(estimators.size(), "Solving");
                 std::vector<Spectrum> buffer(sampleExtent.x * sampleExtent.y, Spectrum(0));
-                for (int depth = 0; depth <= maxDepth; ++depth)
+                for (auto * estimator : estimators)
                 {
-                    auto* estimator = estimators[depth];
                     estimator->solve(buffer.data(), sampler->samplesPerPixel);
                     reporter.Update();
                 }
+                reporter.Done();
 
                 estimators[0]->loopThroughImage([&film, &buffer, &estimators](int i, int j)
                     {
                         Point2f p(i + 0.5, j + 0.5);
                         film->AddSplat(p, buffer[estimators[0]->pixelTo1D(i, j)]);
                     });
-                reporter.Done();
             }
-            for (int depth = 0; depth <= maxDepth; ++depth)
-                delete estimators[depth];
+            for (int i = 0; i < estimators.size(); ++i)
+                delete estimators[i], estimators[i] = nullptr;
 
         } // if scene has lights
         
@@ -423,15 +438,10 @@ namespace pbrt {
         std::shared_ptr<Sampler> sampler,
         std::shared_ptr<const Camera> camera) {
         int maxDepth = params.FindOneInt("maxdepth", 5);
-        bool visualizeStrategies = params.FindOneBool("visualizestrategies", false);
-        bool visualizeWeights = params.FindOneBool("visualizeweights", false);
+        int minDepth = params.FindOneInt("mindepth", 0);
+        int maxOptiDepth = params.FindOneInt("maxoptidepth", maxDepth);
 
-        if ((visualizeStrategies || visualizeWeights) && maxDepth > 5) {
-            Warning(
-                "visualizestrategies/visualizeweights was enabled, limiting "
-                "maxdepth to 5");
-            maxDepth = 5;
-        }
+        
         int np;
         const int* pb = params.FindInt("pixelbounds", &np);
         Bounds2i pixelBounds = camera->film->GetSampleBounds();
@@ -467,8 +477,7 @@ namespace pbrt {
 
         std::string lightStrategy = params.FindOneString("lightsamplestrategy",
             "power");
-        return new OBDPTIntegrator(sampler, camera, maxDepth, visualizeStrategies,
-            visualizeWeights, pixelBounds, h, lightStrategy);
+        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy);
     }
 
 }  // namespace pbrt
