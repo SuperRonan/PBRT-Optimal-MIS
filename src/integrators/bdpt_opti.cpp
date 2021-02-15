@@ -181,8 +181,8 @@ namespace pbrt {
             // Pre allocate estimators
             const bool USE_ROW_MAJOR = true;
             std::vector<MIS::ImageEstimator<Spectrum, Float, USE_ROW_MAJOR>*> estimators;
-            estimators.reserve(maxOptiDepth - minDepth);
-            for (int depth = 1; depth <= maxOptiDepth; ++depth)
+            estimators.reserve(maxOptiDepth - minDepth + 1);
+            for (int depth = minDepth; depth <= maxOptiDepth; ++depth)
             {
                 int N = depth + 2;
                 int width = sampleExtent.x;
@@ -243,7 +243,7 @@ namespace pbrt {
                             for (int t = 1; t <= nCamera; ++t) {
                                 for (int s = 0; s <= nLight; ++s) {
                                     int depth = t + s - 2;
-                                    if ((s == 1 && t == 1) || depth < 0 ||
+                                    if ((s == 1 && t == 1) || depth < minDepth ||
                                         depth > maxDepth)
                                         continue;
                                     bool fallBackBalance = (depth == 0) || (depth > maxOptiDepth);
@@ -271,7 +271,8 @@ namespace pbrt {
                                         }
                                         else
                                         {
-                                            auto* estimator = estimators[s + t - 3];
+                                            int index = depth - std::max(minDepth, 1);
+                                            auto* estimator = estimators[index];
                                             estimator->addEstimate(estimate, balanceWeights, s, u, v);
                                         }
                                     }
@@ -291,8 +292,8 @@ namespace pbrt {
                 reporter.Done();
             }   
             {
-                // Can't launch the solve in parallelism yet
-                // It seems the threads are detained by pbrt
+                // Make sure that OpenMP is enabled to launch the solving in parallel
+                // It should be enabled in the cmakefiles 
                 MIS::Parallel::init();
                 MIS::Parallel::setNumThreads(MaxThreadIndex());
                 ProgressReporter reporter(estimators.size(), "Solving");
