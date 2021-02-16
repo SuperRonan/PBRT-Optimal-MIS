@@ -181,8 +181,7 @@ namespace pbrt {
             // Pre allocate estimators
             const bool USE_ROW_MAJOR = true;
             std::vector<MIS::ImageEstimator<Spectrum, Float, USE_ROW_MAJOR>*> estimators;
-            estimators.reserve(maxOptiDepth - minDepth + 1);
-            for (int depth = minDepth; depth <= maxOptiDepth; ++depth)
+            for (int depth = std::max(1, minDepth); depth <= maxOptiDepth; ++depth)
             {
                 int N = depth + 2;
                 int width = sampleExtent.x;
