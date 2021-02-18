@@ -42,6 +42,12 @@
 #include "stats.h"
 
 
+// Uncorrelated BDPT
+// Draw a new camera and light sub path for every connection strategy
+// Very ineficient, for research purpose only
+//#define UBDPT
+
+
 namespace pbrt {
 
     STAT_PERCENT("Integrator/Zero-radiance paths", zeroRadiancePaths, totalPaths);
@@ -55,11 +61,7 @@ namespace pbrt {
         const Distribution1D& lightPdf,
         const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf, 
         Float * weights, bool & sparseZero) {
-        if (s + t == 2) {
-            // Direct connection between the camera and a light, no light tracing, only once tech
-            weights[0] = 1;
-            return;
-        }
+        DCHECK_NE(s + t, 2);
         Float sumRi = 0;
         Float * const& ratios = weights;
 
@@ -218,9 +220,7 @@ namespace pbrt {
                             Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
                             Vertex* lightVertices = arena.Alloc<Vertex>(maxDepth + 1);
                             Float* balanceWeights = arena.Alloc<Float>(maxDepth + 2);
-                            int nCamera = GenerateCameraSubpath(
-                                scene, *tileSampler, arena, maxDepth + 2, *camera,
-                                pFilm, cameraVertices);
+
                             // Get a distribution for sampling the light at the
                             // start of the light subpath. Because the light path
                             // follows multiple bounces, basing the sampling
@@ -230,11 +230,20 @@ namespace pbrt {
                             // doesn't use the point passed to it.
                             const Distribution1D* lightDistr =
                                 lightDistribution->Lookup(cameraVertices[0].p());
+
+#ifndef UBDPT
+                            int nCamera = GenerateCameraSubpath(
+                                scene, *tileSampler, arena, maxDepth + 2, *camera,
+                                pFilm, cameraVertices);
                             // Now trace the light subpath
                             int nLight = GenerateLightSubpath(
                                 scene, *tileSampler, arena, maxDepth + 1,
                                 cameraVertices[0].time(), *lightDistr, lightToIndex,
                                 lightVertices);
+#else
+                            int nCamera = maxDepth + 2;
+                            int nLight = maxDepth + 1;
+#endif
 
                             // Execute all BDPT connection strategies
                             Spectrum estimate(0.f);
@@ -246,36 +255,52 @@ namespace pbrt {
                                         depth > maxDepth)
                                         continue;
                                     bool fallBackBalance = (depth == 0) || (depth > maxOptiDepth);
-                                    // Execute the $(s, t)$ connection strategy and
-                                    // update _L_
-                                    Point2f pFilmNew = pFilm;
-                                    bool sparseZero = true;
-                                    estimate = ConnectOBDPT(
-                                        scene, lightVertices, cameraVertices, s, t,
-                                        *lightDistr, lightToIndex, *camera, *tileSampler,
-                                        &pFilmNew, balanceWeights, sparseZero);
+#ifdef UBDPT
+                                    int nCamera_generated = GenerateCameraSubpath(
+                                        scene, *tileSampler, arena, t, *camera,
+                                        pFilm, cameraVertices);
+                                    if (nCamera_generated != t)  continue;
+                                    // Now trace the light subpath
+                                    int nLight_generated = GenerateLightSubpath(
+                                        scene, *tileSampler, arena, s,
+                                        cameraVertices[0].time(), *lightDistr, lightToIndex,
+                                        lightVertices);
+                                    if (nLight_generated != s)  continue;
+#endif
 
-                                    if (!sparseZero)
+                                    Point2f pFilmNew = pFilm;
+                                    if (fallBackBalance)
                                     {
-                                        // This is maybe not very clever, since the inverse is done in the addEstimate...
-                                        Float u = pFilmNew.x / sampleExtent.x;
-                                        Float v = pFilmNew.y / sampleExtent.y;
-                                        if (fallBackBalance)
-                                        {
-                                            Spectrum be = balanceWeights[s] * estimate;
-                                            if (t == 1)
-                                                film->AddSplat(pFilmNew, be / sampler->samplesPerPixel);
+                                        estimate = ConnectBDPT(scene, lightVertices, cameraVertices, s, t,
+                                            *lightDistr, lightToIndex, *camera, *tileSampler,
+                                            &pFilmNew);
+                                        ++totalPaths;
+                                        if (estimate.IsBlack()) ++zeroRadiancePaths;
+                                        ReportValue(pathLength, s + t - 2);
+                                        if (!estimate.IsBlack())
+                                            if (t != 1)
+                                                L += estimate;
                                             else
-                                                L += be;
-                                        }
-                                        else
+                                                film->AddSplat(pFilmNew, estimate / sampler->samplesPerPixel);
+                                    }
+                                    else
+                                    {
+                                        bool sparseZero = true;
+                                        estimate = ConnectOBDPT(
+                                            scene, lightVertices, cameraVertices, s, t,
+                                            *lightDistr, lightToIndex, *camera, *tileSampler,
+                                            &pFilmNew, balanceWeights, sparseZero);
+
+                                        if (!sparseZero)
                                         {
+                                            // This is maybe not very clever, since the inverse is done in the addEstimate...
+                                            Float u = pFilmNew.x / sampleExtent.x;
+                                            Float v = pFilmNew.y / sampleExtent.y;
                                             int index = depth - std::max(minDepth, 1);
                                             auto* estimator = estimators[index];
                                             estimator->addEstimate(estimate, balanceWeights, s, u, v);
                                         }
                                     }
-
                                 } // for s
                             } // for s
                             //VLOG(2) << "Add film sample pFilm: " << pFilm << ", L: " << L <<
@@ -289,7 +314,8 @@ namespace pbrt {
                     LOG(INFO) << "Finished image tile " << tileBounds;
                     }, Point2i(nXTiles, nYTiles));
                 reporter.Done();
-            }   
+            }
+            if(!estimators.empty())
             {
                 // Make sure that OpenMP is enabled to launch the solving in parallel
                 // It should be enabled in the cmakefiles 
@@ -334,6 +360,7 @@ namespace pbrt {
         {
             return 0;
         }
+        DCHECK_NE(s + t, 2);
         Float s1Pdf;
         // Perform connection and write contribution to _L_
         Vertex sampled;

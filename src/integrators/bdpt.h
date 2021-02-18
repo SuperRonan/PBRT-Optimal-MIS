@@ -88,14 +88,6 @@ class BDPTIntegrator : public Integrator {
     const std::string lightSampleStrategy;
 };
 
-
-Spectrum ConnectBDPT(
-    const Scene &scene, Vertex *lightVertices, Vertex *cameraVertices, int s,
-    int t, const Distribution1D &lightDistr,
-    const std::unordered_map<const Light *, size_t> &lightToIndex,
-    const Camera &camera, Sampler &sampler, Point2f *pRaster,
-    Float *misWeight = nullptr);
-
 BDPTIntegrator *CreateBDPTIntegrator(const ParamSet &params,
                                      std::shared_ptr<Sampler> sampler,
                                      std::shared_ptr<const Camera> camera);

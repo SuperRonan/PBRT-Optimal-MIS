@@ -517,6 +517,18 @@ namespace pbrt
 
     extern Spectrum G(const Scene& scene, Sampler& sampler, const Vertex& v0,
         const Vertex& v1);
+
+    Float MISWeight(const Scene& scene, Vertex* lightVertices,
+        Vertex* cameraVertices, Vertex& sampled, int s, int t,
+        const Distribution1D& lightPdf,
+        const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf);
+
+    Spectrum ConnectBDPT(
+        const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
+        int t, const Distribution1D& lightDistr,
+        const std::unordered_map<const Light*, size_t>& lightToIndex,
+        const Camera& camera, Sampler& sampler, Point2f* pRaster,
+        Float* misWeight = nullptr);
 } // namespace pbrt
 
 #endif

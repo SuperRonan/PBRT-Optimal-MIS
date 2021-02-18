@@ -31,7 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
-	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
@@ -47,11 +47,12 @@ scenes = [
 	#[pbrt_scenes_folder + 'white-room/whiteroom-daytime.pbrt', 'whiteroom-daytime'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
-	[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
+	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 ]
 
@@ -62,8 +63,8 @@ exec_filters = [
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	('obdpt', 'balance'),
-	('obdpt', 'power'),	
+	#('obdpt', 'balance'),
+	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
@@ -78,7 +79,7 @@ exec_filters = [
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	#(2, 3),
+	(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
@@ -86,8 +87,8 @@ min_max= [
 	#(4, 4),
 	#(2, 8),
 	#(2, 9),
-	(2, 10),
-	(2, 10, 4),
+	#(2, 10),
+	#(2, 10, 5),
 	#(2, 11),
 	#(2, 12),
 	#(2, 13),
@@ -103,6 +104,8 @@ min_max= [
 	#(5, 5),
 	#(6, 6),
 	#(7, 7),
+	#(5, 10),
+	#(10, 10),
 ]
 
 # Select your number of samples (or passes to be more accurate)
