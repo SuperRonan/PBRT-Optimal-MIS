@@ -48,6 +48,9 @@
 //#define UBDPT
 
 
+#define CONSERVATIVE
+
+
 namespace pbrt {
 
     STAT_PERCENT("Integrator/Zero-radiance paths", zeroRadiancePaths, totalPaths);
@@ -394,9 +397,14 @@ namespace pbrt {
                     DCHECK(!L.HasNaNs());
                     // Only check visibility after we know that the path would
                     // make a non-zero contribution.
-                    Spectrum V = vis.Tr(scene, sampler);
-                    L *= V;
-                    sparseZero = V.IsBlack();
+#ifndef CONSERVATIVE
+                    if (!L.IsBlack())
+#endif
+                    {
+                        Spectrum V = vis.Tr(scene, sampler);
+                        L *= V;
+                        sparseZero = V.IsBlack();
+                    }
                 }
             }
         }
@@ -424,9 +432,14 @@ namespace pbrt {
                     L = pt.beta * pt.f(sampled, TransportMode::Radiance) * sampled.beta;
                     if (pt.IsOnSurface()) L *= AbsDot(wi, pt.ns());
                     // Only check visibility if the path would carry radiance.
-                    Spectrum V = vis.Tr(scene, sampler);
-                    L *= V;
-                    sparseZero = V.IsBlack();
+#ifndef CONSERVATIVE
+                    if (!L.IsBlack())
+#endif
+                    {
+                        Spectrum V = vis.Tr(scene, sampler);
+                        L *= V;
+                        sparseZero = V.IsBlack();
+                    }
                 }
             }
         }
@@ -439,9 +452,14 @@ namespace pbrt {
                     " qs: " << qs << ", pt: " << pt << ", qs.f(pt): " << qs.f(pt, TransportMode::Importance) <<
                     ", pt.f(qs): " << pt.f(qs, TransportMode::Radiance) << ", G: " << G(scene, sampler, qs, pt) <<
                     ", dist^2: " << DistanceSquared(qs.p(), pt.p());
-                Spectrum geometry = G(scene, sampler, qs, pt);
-                L *= geometry;
-                sparseZero = geometry.IsBlack();
+#ifndef CONSERVATIVE
+                if (!L.IsBlack())
+#endif
+                {
+                    Spectrum geometry = G(scene, sampler, qs, pt);
+                    L *= geometry;
+                    sparseZero = geometry.IsBlack();
+                }
             }
         }
         if (s >= 2)
