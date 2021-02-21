@@ -41,6 +41,7 @@ namespace pbrt
 			Vector3f wi;
 			Float pdf;
 			Spectrum estimate;
+			bool delta;
 		};
 
 		LightSamplingTechnique(Type type);

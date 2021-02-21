@@ -57,6 +57,7 @@ namespace pbrt
 			sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
 		}
 		sample.type = this->type;
+		sample.delta = sample.light->flags & (int(LightFlags::DeltaDirection) | int(LightFlags::DeltaPosition));
 	}
 
 	Float LiTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
@@ -96,6 +97,7 @@ namespace pbrt
 			sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
 		}
 		sample.type = this->type;
+		sample.delta = sample.light->flags & (int(LightFlags::DeltaDirection) | int(LightFlags::DeltaPosition));
 	}
 
 	Float LeTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
@@ -125,7 +127,8 @@ namespace pbrt
 	{
 		sample.estimate = 0;
 		sample.type = this->type;
-		Spectrum fs = ref.bsdf->Sample_f(ref.wo, &sample.wi, xi, &sample.pdf);
+		BxDFType delta;
+		Spectrum fs = ref.bsdf->Sample_f(ref.wo, &sample.wi, xi, &sample.pdf, BSDF_ALL, &delta);
 		fs *= AbsDot(sample.wi, ref.shading.n);
 
 		SurfaceInteraction lightIsect;
@@ -137,6 +140,7 @@ namespace pbrt
 			sample.light = lightIsect.primitive->GetAreaLight();
 		}
 		sample.vis = VisibilityTester(ref, lightIsect);
+		sample.delta = delta & BxDFType::BSDF_SPECULAR;
 	}
 
 	Float BSDFTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const
@@ -388,9 +392,14 @@ namespace pbrt
 				{
 					if (l != i)
 					{
-						Float pdf = techniques[l].technique->pdf(it, sample);
-						pdfs[l] = pdf;
-						sum += pdf;
+						if (sample.delta && sample.type != techniques[l].technique->type)
+							pdfs[l] = 0;
+						else
+						{
+							Float pdf = techniques[l].technique->pdf(it, sample);
+							pdfs[l] = pdf;
+							sum += pdf;
+						}
 					}
 				}
 				for (int l = 0; l < N; ++l)
