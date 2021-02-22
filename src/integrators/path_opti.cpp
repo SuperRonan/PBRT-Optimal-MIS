@@ -244,6 +244,9 @@ namespace pbrt
 			Bounds2i tileBounds(Point2i(x0, y0), Point2i(x1, y1));
 			LOG(INFO) << "Starting image tile " << tileBounds;
 
+			std::unique_ptr<FilmTile> filmTile =
+				camera->film->GetFilmTile(tileBounds);
+
 			// Loop over pixels in tile to render them
 			for (Point2i pixel : tileBounds) {
 				{
@@ -282,21 +285,21 @@ namespace pbrt
 					{
 						const int N = techniques.size();
 						Float* wbuffer = (Float*)arena.Alloc(sizeof(Float) * N);
-						L = TracePath(ray, scene, *tileSampler, arena, estimators.data(), wbuffer, rayWeight);
+						L += TracePath(ray, scene, *tileSampler, arena, estimators.data(), wbuffer, rayWeight);
 					}
 					// Free _MemoryArena_ memory from computing image sample
 					// value
 					arena.Reset();
 				} while (tileSampler->StartNextSample());
-
+				L /= Float(sampler->samplesPerPixel);
 				// Get the estimators estimations
 				for (EstimatorPtr& estimator : estimators)
 					L += estimator->solve(sampler->samplesPerPixel);
-				// Add camera ray's contribution to image
-				film.AddSplat(Point2f(pixel), L);
+				// Add camera ray's contribution to the image tile
+				filmTile->AddSample(Point2f(pixel.x + 0.5, pixel.y + 0.5), L);
 			}
 			LOG(INFO) << "Finished image tile " << tileBounds;
-
+			camera->film->MergeFilmTile(std::move(filmTile));
 			reporter.Update();
 			}, nTiles);
 		reporter.Done();
