@@ -37,11 +37,12 @@ namespace pbrt
 		{
 			Type type;
 			VisibilityTester vis;
-			const Light* light;
+			const Light* light = nullptr;
 			Vector3f wi;
 			Float pdf;
 			Spectrum estimate;
-			bool delta;
+			bool delta = false;
+			bool visibility_passed = false;
 		};
 
 		LightSamplingTechnique(Type type);

@@ -383,10 +383,14 @@ namespace pbrt
 					// skip it (consider it as a singular zero
 					continue;
 				}
-				// visibility test (for gathering techniques)
-				Spectrum visibility = sample.vis.Tr(scene, sampler);
-				bool V = !visibility.IsBlack();
-				Spectrum estimate = sample.estimate * visibility / Float(ni);
+				Spectrum estimate = sample.estimate / Float(ni);
+				if (sample.type == LightSamplingTechnique::Type::Gathering)
+				{
+					// visibility test (for gathering techniques)
+					Spectrum visibility = sample.vis.Tr(scene, sampler);
+					sample.visibility_passed = !visibility.IsBlack();
+					estimate *= visibility;
+				}
 				// Use the weights buffer to tmporarily store the PDFs
 				Float sum = sample.pdf;
 				Float*& pdfs = wbuffer;
@@ -395,7 +399,10 @@ namespace pbrt
 				{
 					if (l != i)
 					{
-						if (sample.delta && sample.type != techniques[l].technique->type)
+						bool other_type_is_zero =
+							(sample.type == LightSamplingTechnique::Type::Gathering && !sample.visibility_passed) ||
+							(sample.type == LightSamplingTechnique::Type::Splatting && sample.light == nullptr);
+						if (sample.type != techniques[l].technique->type && (sample.delta || other_type_is_zero))
 							pdfs[l] = 0;
 						else
 						{
