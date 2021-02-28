@@ -139,7 +139,7 @@ namespace pbrt
 		sample.type = this->type;
 		BxDFType delta;
 		Spectrum fs = ref.bsdf->Sample_f(ref.wo, &sample.wi, xi, &sample.pdf, BSDF_ALL, &delta);
-		if (sample.pdf > 0)
+		if (sample.pdf > 0 || !fs.IsBlack())
 		{
 			fs *= AbsDot(sample.wi, ref.shading.n) / sample.pdf;
 			sample.delta = delta & BxDFType::BSDF_SPECULAR;
@@ -207,7 +207,7 @@ namespace pbrt
 		ParallelFor([&](int tid)
 			{
 				std::vector<Estimator*> & estimators = _estimators_buffer[tid];
-				estimators.resize(N);
+				estimators.resize(maxDepth);
 				for (int j = 0; j < estimators.size(); ++j)
 				{
 					Estimator*& estimator = estimators[j];
@@ -333,11 +333,12 @@ namespace pbrt
 		bool specularBounce = false;
 		int bounce = 0;
 		// We assume depth starts at zero
-		for (depth; depth <= maxDepth; ++depth)
+		for (depth; depth < maxDepth; ++depth)
 		{
 			SurfaceInteraction isect;
 			bool foundIntersection = scene.Intersect(ray, &isect);
 
+			
 			if (depth == 0)
 			{
 				// Directly viewing the light
@@ -355,7 +356,7 @@ namespace pbrt
 				res = beta * direct;
 			}
 			
-			if (!foundIntersection || depth >= maxDepth)break;
+			if (!foundIntersection)	break;
 			
 			isect.ComputeScatteringFunctions(ray, arena, true);
 			
@@ -372,17 +373,25 @@ namespace pbrt
 
 			// Draw the samples from multiple techniques to estimate direct lighting
 			// And feed the samples to the estimator
-			directLighting(isect, scene, arena, sampler, estimator, wbuffer);
+			directLighting(isect, scene, beta, arena, sampler, estimator, wbuffer);
 
-			// TODO sample the BSDF to continue the path
-			break;
+			// Sample the BSDF to continue the path
+			Vector3f wo = -ray.d, wi;
+			Float pdf;
+			BxDFType flags;
+			Spectrum f = isect.bsdf->Sample_f(wo, &wi, sampler.Get2D(), &pdf, BSDF_ALL, &flags);
+			if (f.IsBlack() || pdf <= 0)	break;
+			Float cos_wi = AbsDot(wi, isect.shading.n);
+			beta *= f * cos_wi / pdf;
+			specularBounce = (flags & BSDF_SPECULAR) != 0;
+			ray = isect.SpawnRay(wi);
 		}
 
 		return res;
 	}
 
 
-	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
+	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, Spectrum const& beta, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
 	{
 		using Sample = LightSamplingTechnique::Sample;
 		const int N = techniques.size();
@@ -402,7 +411,7 @@ namespace pbrt
 					// skip it (consider it as a singular zero
 					continue;
 				}
-				Spectrum estimate = sample.estimate / Float(ni);
+				Spectrum estimate = beta * sample.estimate / Float(ni);
 				if (sample.type == LightSamplingTechnique::Type::Gathering)
 				{
 					// visibility test (for gathering techniques)

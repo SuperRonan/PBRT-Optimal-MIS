@@ -79,7 +79,6 @@ def integrator_str(options, min_depth, max_depth, max_opti_depth):
 	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth)
 	if options[0] == 'opath' and len(options) >= 3:
 		techniques = options[2]
-		print(techniques)
 		res += techniques_string(techniques)
 	return res
 

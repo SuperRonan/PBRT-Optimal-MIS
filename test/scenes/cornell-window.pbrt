@@ -1,7 +1,8 @@
 
 ##INTEGRATOR-DEF-START
 
-Integrator "path" "integer maxdepth" [ 1 ] 
+#Integrator "path" "integer maxdepth" [ 1 ] 
+Integrator "opath" "integer BSDF" 1 "integer Li" 1
 
 ##INTEGRATOR-DEF-END
 
@@ -72,14 +73,14 @@ Scale 2 2 2
 TransformBegin
 Translate 0 0 0.3
 	# center glass wall
-		NamedMaterial "glass"
+		#NamedMaterial "glass"
 		#Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.3 0 -0.25   -0.3 2 -0.25   -0.3 2 -0.75   -0.3 0 -0.75 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ]
 	# center green wall
-		NamedMaterial "green"
-		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.3 0 0   -0.3 2 0   -0.3 2 -0.25   -0.3 0 -0.25 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ]
+		#NamedMaterial "green"
+		#Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.3 0 0   -0.3 2 0   -0.3 2 -0.25   -0.3 0 -0.25 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ]
 	# center red wall
-		NamedMaterial "red"
-		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.3 0 -0.75   -0.3 2 -0.75   -0.3 2 -1   -0.3 0 -1 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ]
+		#NamedMaterial "red"
+		#Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -0.3 0 -0.75   -0.3 2 -0.75   -0.3 2 -1   -0.3 0 -1 ] "normal N" [ -1 0 0   -1 0 0   -1 0 0   -1 0 0 ] "float uv" [ 0 0 1 0 1 1 0 1 ]
 TransformEnd
 TransformEnd
 

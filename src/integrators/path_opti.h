@@ -176,7 +176,7 @@ namespace pbrt
 
 		void Preprocess(const Scene& scene, Sampler& sampler);
 
-		void directLighting(SurfaceInteraction const& isect, Scene const& scene, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const;
+		void directLighting(SurfaceInteraction const& isect, Scene const& scene, Spectrum const& beta, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const;
 
 		// Returns the contribution of not computed with MIS, i.e. directly visibible lights (depth = 0)
 		Spectrum TracePath(const RayDifferential& ray, const Scene& scene, Sampler& sampler, MemoryArena& arena, EstimatorPtr* estimators, Float* wbuffer, Spectrum beta=1, int depth = 0) const;

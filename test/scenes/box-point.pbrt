@@ -1,13 +1,13 @@
 
 ##INTEGRATOR-DEF-START
-Integrator "optiMISbdpt" "string heuristic" "direct" "integer maxdepth" [ 5 ] "integer mindepth" [ 0 ] "string lighttracer" "yes" "bool samplezero" "false" 
+Integrator "opath" "string heuristic" "balance" "integer maxdepth" [ 5 ] "integer BSDF" [ 1 ] "integer Li" [ 1 ]
 ##INTEGRATOR-DEF-END
 Transform [ 1 -0 -0 -0 -0 1 -0 -0 -0 -0 -1 -0 -0 -1 6.8 1]
 ##SAMPLER-DEF-START
 Sampler "random" "integer pixelsamples" 16 
 ##SAMPLER-DEF-END
 #PixelFilter "triangle" "float xwidth" [ 1.000000 ] "float ywidth" [ 1.000000 ] 
-Film "image" "integer xresolution" [ 1024 ] "integer yresolution" [ 1024 ] "string filename" [ "cornell-box.png" ] 
+Film "image" "integer xresolution" [ 128 ] "integer yresolution" [ 128 ] "string filename" [ "cornell-box.png" ] 
 Camera "perspective" "float fov" [ 19.500000 ] 
 WorldBegin
 	MakeNamedMaterial "LeftWall" "string type" [ "matte" ] "rgb Kd" [ 0.630000 0.065000 0.050000 ] 

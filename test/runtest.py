@@ -31,7 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
-	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/scene.pbrt', 'veach-bidir'],
@@ -48,7 +48,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
-	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
@@ -59,7 +59,7 @@ scenes = [
 # Select your integrator
 # options: (name, heuristic, extra)
 exec_filters = [
-	#('path', ''),
+	('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
@@ -68,22 +68,22 @@ exec_filters = [
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	('obdpt', 'direct'),	
+	#('obdpt', 'direct'),	
 
-	#('opath', 'balance', [('BSDF', 1), ("Li", 2)]),
-	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
-	#('opath', 'direct', [('BSDF', 2), ("Li", 1)]),
+	('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
+	('opath', 'power', [('BSDF', 1), ("Li", 1)]),
+	('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
-	#(2, 7),
+	(2, 7),
 	#(4, 4),
 	#(2, 8),
 	#(2, 9),
@@ -105,7 +105,7 @@ min_max= [
 	#(6, 6),
 	#(7, 7),
 	#(5, 10),
-	#(10, 10),
+	#(10, 10, 2),
 ]
 
 # Select your number of samples (or passes to be more accurate)
@@ -125,8 +125,9 @@ numbers_of_samples = [
 	#4096,
 	#8192,
 	#16384,
-	#38768,
+	#32768,
 	#65536,
+	#131072,
 ]
 
 results = []
@@ -137,7 +138,7 @@ passed = 0
 
 for mm in min_max:
 
-	print("depths: ", mm)
+	
 
 	min_len = mm[0]
 	max_len = mm[1]
@@ -146,17 +147,19 @@ for mm in min_max:
 	max_opti_depth = mm[2]-2 if len(mm) == 3 else None
 
 	for number_of_samples in numbers_of_samples:  
-		print(number_of_samples, " samples")  
 		for scene_info in scenes:
-			print(scene_info[1])
-			sub_folder = scene_info[1] + "_s%d_l%d_l%d/" % (number_of_samples, max_len, min_len)
+			sub_folder = scene_info[1] + "_s%d_L%d_l%d/" % (number_of_samples, max_len, min_len)
 
 			scene_path = scene_info[0]  
 			
 			pbrt_scene = PBRTSceneFile(scene_path)
 
 			for exec_filter in exec_filters:
-				print(exec_filter[0])
+				print('#' * 200)
+				print("depths: ", mm)
+				print(number_of_samples, " samples per pixel")  
+				print("Scene name: ", scene_info[1])
+				print("Integrator: ", exec_filter)
 
 				pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
 				pbrt_scene.sampler = sampler_str(number_of_samples)
