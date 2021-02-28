@@ -121,6 +121,16 @@ namespace pbrt
 	void BSDFTechnique::init(Scene const& scene, LightDistribution const&)
 	{
 		this->scene = &scene;
+		// Find the envmap, if exists
+		for (const auto& l : scene.infiniteLights)
+		{
+			if (l->flags & int(LightFlags::Infinite))
+			{
+				this->envmap = l.get();
+				break;
+			}
+		}
+		scene_radius = scene.WorldBound().Diagonal().Length() * 2.0;
 	}
 
 	void BSDFTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
@@ -129,18 +139,27 @@ namespace pbrt
 		sample.type = this->type;
 		BxDFType delta;
 		Spectrum fs = ref.bsdf->Sample_f(ref.wo, &sample.wi, xi, &sample.pdf, BSDF_ALL, &delta);
-		fs *= AbsDot(sample.wi, ref.shading.n);
-
-		SurfaceInteraction lightIsect;
-		Ray ray = ref.SpawnRay(sample.wi);
-		bool foundIntersection = scene->Intersect(ray, &lightIsect);
-		if (foundIntersection)
+		if (sample.pdf > 0)
 		{
-			sample.estimate = fs * lightIsect.Le(-sample.wi) / sample.pdf;
-			sample.light = lightIsect.primitive->GetAreaLight();
+			fs *= AbsDot(sample.wi, ref.shading.n) / sample.pdf;
+			sample.delta = delta & BxDFType::BSDF_SPECULAR;
+
+			SurfaceInteraction lightIsect;
+			Ray ray = ref.SpawnRay(sample.wi);
+			bool foundIntersection = scene->Intersect(ray, &lightIsect);
+			if (foundIntersection)
+			{
+				sample.estimate = fs * lightIsect.Le(-sample.wi);
+				sample.light = lightIsect.primitive->GetAreaLight();
+				sample.vis = VisibilityTester(ref, lightIsect);
+			}
+			else if (envmap)
+			{
+				sample.estimate = fs * envmap->Le(ray);
+				sample.light = envmap;
+				sample.vis = VisibilityTester(ref, Interaction(ray(scene_radius), -ray.d, ray.time, MediumInterface()));
+			}
 		}
-		sample.vis = VisibilityTester(ref, lightIsect);
-		sample.delta = delta & BxDFType::BSDF_SPECULAR;
 	}
 
 	Float BSDFTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const

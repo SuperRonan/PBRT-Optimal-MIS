@@ -48,7 +48,7 @@
 //#define UBDPT
 
 
-#define CONSERVATIVE
+//#define CONSERVATIVE
 
 
 namespace pbrt {

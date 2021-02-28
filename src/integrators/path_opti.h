@@ -109,6 +109,8 @@ namespace pbrt
 	protected:
 
 		Scene const* scene;
+		const Light* envmap = nullptr;
+		float scene_radius;
 
 	public:
 
