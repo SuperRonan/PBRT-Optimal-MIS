@@ -134,6 +134,11 @@ void DiffuseAreaLight::Pdf_Le(const Ray &ray, const Normal3f &n, Float *pdfPos,
         *pdfDir = std::max(Float(0), CosineHemispherePdf(Dot(n, ray.d))); // pdf should be zero on the other side, not negative
 }
 
+Bounds3f DiffuseAreaLight::Bounds() const {
+    return shape->WorldBound();
+}
+
+
 std::shared_ptr<AreaLight> CreateDiffuseAreaLight(
     const Transform &light2world, const Medium *medium,
     const ParamSet &paramSet, const std::shared_ptr<Shape> &shape) {

@@ -82,6 +82,9 @@ class Shape {
     // used in this case.
     virtual Float SolidAngle(const Point3f &p, int nSamples = 512) const;
 
+    virtual bool GetTriangleVertices(Point3f* v0, Point3f* v1, Point3f* v2) const { return false; }
+
+
     // Shape Public Data
     const Transform *ObjectToWorld, *WorldToObject;
     const bool reverseOrientation;

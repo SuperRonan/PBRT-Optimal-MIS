@@ -54,29 +54,29 @@ public:
 		struct {
 			Vector3f A, B, C;
 			Vector3f normal;
-			float area = -1.f;
+			Float area = -1.f;
 		} sphereSimple;
 
 		struct {
 			Vector3f A, B, C;
-			float alpha, beta, gamma;
-			float a, b, c;
-			float area = -1.f;
+			Float alpha, beta, gamma;
+			Float a, b, c;
+			Float area = -1.f;
 		} spherePrecise;
 
 		struct {
 			Vector3f A, B, C;
 			Vector3f normal;
-			float area = -1.f;
+			Float area = -1.f;
 		} parallelPlane;
 
-		bool hitsTriangle(const Vector3f &A, const Vector3f &B, const Vector3f &C, const Vector3f &wi, float *dist) const;
+		bool hitsTriangle(const Vector3f &A, const Vector3f &B, const Vector3f &C, const Vector3f &wi, Float *dist) const;
 	public:
 		ProjectedTriangle() {}
 		ProjectedTriangle(const Point3f &origin, const Normal3f &normal, const Point3f &v0, const Point3f &v1, const Point3f &v2);
 
 		Vector3f Sample(const Point2f &u, SamplingProjection projection, Float *pdf) const;
-		float Pdf(const Vector3f &wi, SamplingProjection projection) const;
+		Float Pdf(const Vector3f &wi, SamplingProjection projection) const;
 		bool CanSample(SamplingProjection projection) const;
 	};
 
@@ -84,7 +84,7 @@ public:
 
 	Vector3f Sample_wi(const Point2f &u, SamplingProjection projection, Float *pdf) const;
 
-	float Pdf(const Vector3f &wi, SamplingProjection projection) const;
+	Float Pdf(const Vector3f &wi, SamplingProjection projection) const;
 
 	bool CanSample(SamplingProjection projection) const;
 
@@ -92,7 +92,7 @@ private:
 	bool isTriangle;
 	ProjectedTriangle projectedTriangle;
 	Vector3f ns, ss, ts;
-	float cosMaxAngle;	
+	Float cosMaxAngle;	
 
 	Vector3f WorldToLocal(const Vector3f &v) const {
 		return Vector3f(Dot(v, ss), Dot(v, ts), Dot(v, ns));

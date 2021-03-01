@@ -78,6 +78,9 @@ class Light {
     virtual void Pdf_Le(const Ray &ray, const Normal3f &nLight, Float *pdfPos,
                         Float *pdfDir) const = 0;
 
+    virtual Bounds3f Bounds() const { return Bounds3f(); }
+    virtual bool GetTriangleVertices(Point3f* v0, Point3f* v1, Point3f* v2) const { return false; }
+
     // Light Public Data
     const int flags;
     const int nSamples;

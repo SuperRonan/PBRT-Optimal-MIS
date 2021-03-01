@@ -65,6 +65,10 @@ class DiffuseAreaLight : public AreaLight {
                        Float *pdfDir) const;
     void Pdf_Le(const Ray &, const Normal3f &, Float *pdfPos,
                 Float *pdfDir) const;
+    virtual Bounds3f Bounds() const final;
+    
+    virtual bool GetTriangleVertices(Point3f* v0, Point3f* v1, Point3f* v2) const final { return shape->GetTriangleVertices(v0, v1, v2); }
+
 
   protected:
     // DiffuseAreaLight Protected Data

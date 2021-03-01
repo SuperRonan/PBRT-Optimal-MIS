@@ -51,7 +51,7 @@ GuidingDistribution::ProjectedTriangle::ProjectedTriangle(const Point3f &origin,
 	sphereSimple.C = Normalize(v2local);
 	sphereSimple.area = 0.5 * Cross(sphereSimple.B - sphereSimple.A, sphereSimple.C - sphereSimple.A).Length();
 
-    const float minArea = 1e-5f;
+    const Float minArea = 1e-5f;
 
     if (sphereSimple.area <= minArea) {
 		sphereSimple.area = -1.f;
@@ -85,7 +85,7 @@ GuidingDistribution::ProjectedTriangle::ProjectedTriangle(const Point3f &origin,
 			spherePrecise.area = -1.f;
 		} 
 		
-		const float eps = 0.0001f;
+		const Float eps = 0.0001f;
 		if (spherePrecise.alpha >= (Pi - eps) && spherePrecise.beta >= (Pi - eps) && spherePrecise.gamma >= (Pi - eps)) {
 			// Don't sample triangle if it covers almost entire hemisphere
 			sphereSimple.area = -1.f;
@@ -94,9 +94,9 @@ GuidingDistribution::ProjectedTriangle::ProjectedTriangle(const Point3f &origin,
 	}
 
 	// ParallelPlane projection
-	float dot0 = Dot(v0local, normal);
-	float dot1 = Dot(v1local, normal);
-	float dot2 = Dot(v2local, normal);
+	Float dot0 = Dot(v0local, normal);
+	Float dot1 = Dot(v1local, normal);
+	Float dot2 = Dot(v2local, normal);
 
 	if (dot0 < 0.f && dot1 < 0.f && dot2 < 0.f) {
 		dot0 = -dot0;
@@ -104,7 +104,7 @@ GuidingDistribution::ProjectedTriangle::ProjectedTriangle(const Point3f &origin,
 		dot2 = -dot2;
 	}
 
-	const float eps = 0.1f;
+	const Float eps = 0.1f;
 	if (dot0 > eps && dot1 > eps && dot2 > eps) {
 		parallelPlane.A = v0local / dot0;
 		parallelPlane.B = v1local / dot1;
@@ -128,12 +128,12 @@ Vector3f GuidingDistribution::ProjectedTriangle::Sample(const Point2f &r, Sampli
 	switch (projection) {
 	case SamplingProjection::SphereSimple:
 		{
-			const float su0 = std::sqrt(r[0]);
+			const Float su0 = std::sqrt(r[0]);
 			const Point2f b = Point2f(1 - su0, r[1] * su0);
 			const Vector3f pointOnTriangle = b[0] * sphereSimple.A + b[1] * sphereSimple.B + (1 - b[0] - b[1]) * sphereSimple.C;
 			const Vector3f wi = Normalize(pointOnTriangle);
 			if (pdf) {
-                const float coslight = AbsDot(sphereSimple.normal, -wi);
+                const Float coslight = AbsDot(sphereSimple.normal, -wi);
                 if (coslight == 0.f) {
                     *pdf = 0.f;
                 } else {
@@ -145,14 +145,14 @@ Vector3f GuidingDistribution::ProjectedTriangle::Sample(const Point2f &r, Sampli
 	case SamplingProjection::SpherePrecise:
 		{
 			// https://www.graphics.cornell.edu/pubs/1995/Arv95c.pdf
-			const float ra = r[0] * spherePrecise.area;
-			const float s = std::sin(ra - spherePrecise.alpha);
-			const float t = std::cos(ra - spherePrecise.alpha);
-			const float u = t - std::cos(spherePrecise.alpha);
-			const float v = s + std::sin(spherePrecise.alpha) * std::cos(spherePrecise.c);
-			const float q = Clamp(((v * t - u * s) * std::cos(spherePrecise.alpha) - v) / ((v * s + u * t) * std::sin(spherePrecise.alpha)), -1, 1);
+			const Float ra = r[0] * spherePrecise.area;
+			const Float s = std::sin(ra - spherePrecise.alpha);
+			const Float t = std::cos(ra - spherePrecise.alpha);
+			const Float u = t - std::cos(spherePrecise.alpha);
+			const Float v = s + std::sin(spherePrecise.alpha) * std::cos(spherePrecise.c);
+			const Float q = Clamp(((v * t - u * s) * std::cos(spherePrecise.alpha) - v) / ((v * s + u * t) * std::sin(spherePrecise.alpha)), -1, 1);
 			const Vector3f C2 = q * spherePrecise.A + std::sqrt(1 - q * q) * Normalize(spherePrecise.C - Dot(spherePrecise.C, spherePrecise.A) * spherePrecise.A);
-			const float z = Clamp(1 - r[1] * (1 - Dot(C2, spherePrecise.B)), -1, 1);
+			const Float z = Clamp(1 - r[1] * (1 - Dot(C2, spherePrecise.B)), -1, 1);
 			const Vector3f P = ((C2 - Dot(C2, spherePrecise.B) * spherePrecise.B).LengthSquared() == 0.f) ? z * spherePrecise.B : z * spherePrecise.B + std::sqrt(1 - z * z) * Normalize(C2 - Dot(C2, spherePrecise.B) * spherePrecise.B);
 			if (pdf) {
 				*pdf = 1.f / spherePrecise.area;
@@ -161,12 +161,12 @@ Vector3f GuidingDistribution::ProjectedTriangle::Sample(const Point2f &r, Sampli
 		}
 	case SamplingProjection::ParallelPlane:
 		{
-			const float su0 = std::sqrt(r[0]);
+			const Float su0 = std::sqrt(r[0]);
 			const Point2f b = Point2f(1 - su0, r[1] * su0);
 			const Vector3f pointOnTriangle = b[0] * parallelPlane.A + b[1] * parallelPlane.B + (1 - b[0] - b[1]) * parallelPlane.C;
 			const Vector3f wi = Normalize(pointOnTriangle);			
 			if (pdf) {
-                const float coslight = AbsDot(parallelPlane.normal, -wi);
+                const Float coslight = AbsDot(parallelPlane.normal, -wi);
                 if (coslight == 0.f) {
                     *pdf = 0.f;
                 } else {
@@ -181,13 +181,13 @@ Vector3f GuidingDistribution::ProjectedTriangle::Sample(const Point2f &r, Sampli
 	}
 }
 
-float GuidingDistribution::ProjectedTriangle::Pdf(const Vector3f &wi, SamplingProjection projection) const {
+Float GuidingDistribution::ProjectedTriangle::Pdf(const Vector3f &wi, SamplingProjection projection) const {
 	if (!CanSample(projection)) {
 		Error("GuidingDistribution::ProjectedTriangle::Pdf: Invalid projection required!");
 		return 0.f;
 	}
-    float coslight;
-	float hitDist;
+    Float coslight;
+	Float hitDist;
 	bool hit;
 	switch (projection) {
 	case SamplingProjection::SphereSimple:
@@ -241,7 +241,7 @@ bool GuidingDistribution::ProjectedTriangle::CanSample(SamplingProjection projec
 	}
 }
 
-bool GuidingDistribution::ProjectedTriangle::hitsTriangle(const Vector3f &A, const Vector3f &B, const Vector3f &C, const Vector3f &wi, float *dist) const {
+bool GuidingDistribution::ProjectedTriangle::hitsTriangle(const Vector3f &A, const Vector3f &B, const Vector3f &C, const Vector3f &wi, Float *dist) const {
 	Vector3f p0t = A;
 	Vector3f p1t = B;
 	Vector3f p2t = C;
@@ -278,13 +278,13 @@ bool GuidingDistribution::ProjectedTriangle::hitsTriangle(const Vector3f &A, con
 		(e0 == 0.0f || e1 == 0.0f || e2 == 0.0f)) {
 		double p2txp1ty = (double)p2t.x * (double)p1t.y;
 		double p2typ1tx = (double)p2t.y * (double)p1t.x;
-		e0 = (float)(p2typ1tx - p2txp1ty);
+		e0 = (Float)(p2typ1tx - p2txp1ty);
 		double p0txp2ty = (double)p0t.x * (double)p2t.y;
 		double p0typ2tx = (double)p0t.y * (double)p2t.x;
-		e1 = (float)(p0typ2tx - p0txp2ty);
+		e1 = (Float)(p0typ2tx - p0txp2ty);
 		double p1txp0ty = (double)p1t.x * (double)p0t.y;
 		double p1typ0tx = (double)p1t.y * (double)p0t.x;
-		e2 = (float)(p1typ0tx - p1txp0ty);
+		e2 = (Float)(p1typ0tx - p1txp0ty);
 	}
 
 	// Perform triangle edge and determinant tests
@@ -363,12 +363,12 @@ GuidingDistribution::GuidingDistribution(const SurfaceInteraction &it, const Lig
 	if (!isTriangle) {
 		// Compute bounding sphere from the box
 		Point3f sphereCenter;
-		float sphereRadius;
+		Float sphereRadius;
 		lightBBox.BoundingSphere(&sphereCenter, &sphereRadius);
 
 		const Vector3f normal = Vector3f(it.shading.n);
 		const Vector3f dirToCenter = sphereCenter - it.p;
-		const float distToCenter = dirToCenter.Length();
+		const Float distToCenter = dirToCenter.Length();
 
 		// If inside the bounding sphere, sample uniformly the hemisphere
 		if (distToCenter < sphereRadius) {			
@@ -403,7 +403,7 @@ Vector3f GuidingDistribution::Sample_wi(const Point2f &u, SamplingProjection pro
 	}
 	
 	// If the triangle can't be sampled, sample the sphere cap
-	const float common = std::sqrt(1.f - (1.f - u.y * (1.f - cosMaxAngle)) * (1.f - u.y * (1.f - cosMaxAngle)));
+	const Float common = std::sqrt(1.f - (1.f - u.y * (1.f - cosMaxAngle)) * (1.f - u.y * (1.f - cosMaxAngle)));
 	const Vector3f wi = Vector3f(std::cos(2.f * Pi * u.x) * common, std::sin(2.f * Pi * u.x) * common, 1.f - u.y * (1.f - cosMaxAngle));
 	if (pdf) {
 		*pdf = 1.f / (2.f * Pi * (1.f - cosMaxAngle));
@@ -411,7 +411,7 @@ Vector3f GuidingDistribution::Sample_wi(const Point2f &u, SamplingProjection pro
 	return LocalToWorld(wi);
 }
 
-float GuidingDistribution::Pdf(const Vector3f& wi, SamplingProjection projection) const {
+Float GuidingDistribution::Pdf(const Vector3f& wi, SamplingProjection projection) const {
 	if (isTriangle) {
 		if (projectedTriangle.CanSample(projection)) {
 			return projectedTriangle.Pdf(wi, projection);
@@ -422,7 +422,7 @@ float GuidingDistribution::Pdf(const Vector3f& wi, SamplingProjection projection
 	}
 	
 	// If the triangle couln't be sampled, the sphere cap was sampled
-	const float cosAngle = (Normalize(WorldToLocal(wi))).z;
+	const Float cosAngle = (Normalize(WorldToLocal(wi))).z;
 	if (cosAngle >= cosMaxAngle) {
 		return 1.f / (2.f * Pi * (1.f - cosMaxAngle));
 	}
