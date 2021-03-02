@@ -114,11 +114,7 @@ namespace pbrt
 		LightSamplingTechnique(Type::Splatting)
 	{}
 
-	BSDFTechnique::BSDFTechnique():
-		SplattingTechnique()
-	{}
-
-	void BSDFTechnique::init(Scene const& scene, LightDistribution const&)
+	void SplattingTechnique::init(Scene const& scene, LightDistribution const&)
 	{
 		this->scene = &scene;
 		// Find the envmap, if exists
@@ -132,6 +128,10 @@ namespace pbrt
 		}
 		scene_radius = scene.WorldBound().Diagonal().Length() * 2.0;
 	}
+	
+	BSDFTechnique::BSDFTechnique():
+		SplattingTechnique()
+	{}
 
 	void BSDFTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
 	{
@@ -166,6 +166,44 @@ namespace pbrt
 	{
 		return ref.bsdf->Pdf(ref.wo, sample.wi);
 	}
+
+
+
+	GuidingTechnique::GuidingTechnique():
+		GatheringTechnique()
+	{}
+
+	void GuidingTechnique::init(Scene const& scene, LightDistribution const& distrib)
+	{
+		distribution = &distrib;
+		this->scene = &scene;
+
+		//light_distrib = std::make_unique<LightDistribution>()
+
+		for (size_t i = 0; i < scene.lights.size(); ++i)
+		{
+			lightToIndex[scene.lights[i].get()] = i;
+		}
+	}
+
+
+	void GuidingTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
+	{
+		//GuidingDistribution gdstrb()
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	PathOptiIntegrator::PathOptiIntegrator(

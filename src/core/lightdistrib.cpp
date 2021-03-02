@@ -65,8 +65,33 @@ std::unique_ptr<LightDistribution> CreateLightSampleDistribution(
     }
 }
 
+std::unique_ptr<LightDistribution> CreateLightSampleDistribution(
+    const std::string& name, const Scene& scene, std::vector<std::shared_ptr<Light>> const& lights) {
+    if (name == "uniform" || lights.size() == 1)
+        return std::unique_ptr<LightDistribution>{
+        new UniformLightDistribution(lights)};
+    else if (name == "power")
+        return std::unique_ptr<LightDistribution>{
+        new PowerLightDistribution(lights)};
+    else if (name == "spatial")
+        return std::unique_ptr<LightDistribution>{
+        new SpatialLightDistribution(scene, lights)};
+    else {
+        Error(
+            "Light sample distribution type \"%s\" unknown. Using \"spatial\".",
+            name.c_str());
+        return std::unique_ptr<LightDistribution>{
+            new SpatialLightDistribution(scene, lights)};
+    }
+}
+
 UniformLightDistribution::UniformLightDistribution(const Scene &scene) {
     std::vector<Float> prob(scene.lights.size(), Float(1));
+    distrib.reset(new Distribution1D(&prob[0], int(prob.size())));
+}
+
+UniformLightDistribution::UniformLightDistribution(std::vector<std::shared_ptr<Light>> const& lights) {
+    std::vector<Float> prob(lights.size(), Float(1));
     distrib.reset(new Distribution1D(&prob[0], int(prob.size())));
 }
 
@@ -76,6 +101,9 @@ const Distribution1D *UniformLightDistribution::Lookup(const Point3f &p) const {
 
 PowerLightDistribution::PowerLightDistribution(const Scene &scene)
     : distrib(ComputeLightPowerDistribution(scene)) {}
+
+PowerLightDistribution::PowerLightDistribution(std::vector<std::shared_ptr<Light>> const& lights)
+    : distrib(ComputeLightPowerDistribution(lights)) {}
 
 const Distribution1D *PowerLightDistribution::Lookup(const Point3f &p) const {
     return distrib.get();
@@ -95,7 +123,37 @@ static const uint64_t invalidPackedPos = 0xffffffffffffffff;
 
 SpatialLightDistribution::SpatialLightDistribution(const Scene &scene,
                                                    int maxVoxels)
-    : scene(scene) {
+    : scene(scene), lights(scene.lights) {
+    // Compute the number of voxels so that the widest scene bounding box
+    // dimension has maxVoxels voxels and the other dimensions have a number
+    // of voxels so that voxels are roughly cube shaped.
+    Bounds3f b = scene.WorldBound();
+    Vector3f diag = b.Diagonal();
+    Float bmax = diag[b.MaximumExtent()];
+    for (int i = 0; i < 3; ++i) {
+        nVoxels[i] = std::max(1, int(std::round(diag[i] / bmax * maxVoxels)));
+        // In the Lookup() method, we require that 20 or fewer bits be
+        // sufficient to represent each coordinate value. It's fairly hard
+        // to imagine that this would ever be a problem.
+        CHECK_LT(nVoxels[i], 1 << 20);
+    }
+
+    hashTableSize = 4 * nVoxels[0] * nVoxels[1] * nVoxels[2];
+    hashTable.reset(new HashEntry[hashTableSize]);
+    for (int i = 0; i < hashTableSize; ++i) {
+        hashTable[i].packedPos.store(invalidPackedPos);
+        hashTable[i].distribution.store(nullptr);
+    }
+
+    LOG(INFO) << "SpatialLightDistribution: scene bounds " << b <<
+        ", voxel res (" << nVoxels[0] << ", " << nVoxels[1] << ", " <<
+        nVoxels[2] << ")";
+}
+
+SpatialLightDistribution::SpatialLightDistribution(const Scene& scene,
+    std::vector<std::shared_ptr<Light>> const& lights,
+    int maxVoxels)
+    : scene(scene), lights(lights) {
     // Compute the number of voxels so that the widest scene bounding box
     // dimension has maxVoxels voxels and the other dimensions have a number
     // of voxels so that voxels are roughly cube shaped.
@@ -253,7 +311,7 @@ SpatialLightDistribution::ComputeDistribution(Point3i pi) const {
     // point on the light source) as an approximation to how much the light
     // is likely to contribute to illumination in the voxel.
     int nSamples = 128;
-    std::vector<Float> lightContrib(scene.lights.size(), Float(0));
+    std::vector<Float> lightContrib(lights.size(), Float(0));
     for (int i = 0; i < nSamples; ++i) {
         Point3f po = voxelBounds.Lerp(Point3f(
             RadicalInverse(0, i), RadicalInverse(1, i), RadicalInverse(2, i)));
@@ -263,11 +321,11 @@ SpatialLightDistribution::ComputeDistribution(Point3i pi) const {
         // Use the next two Halton dimensions to sample a point on the
         // light source.
         Point2f u(RadicalInverse(3, i), RadicalInverse(4, i));
-        for (size_t j = 0; j < scene.lights.size(); ++j) {
+        for (size_t j = 0; j < lights.size(); ++j) {
             Float pdf;
             Vector3f wi;
             VisibilityTester vis;
-            Spectrum Li = scene.lights[j]->Sample_Li(intr, u, &wi, &pdf, &vis);
+            Spectrum Li = lights[j]->Sample_Li(intr, u, &wi, &pdf, &vis);
             if (pdf > 0) {
                 // TODO: look at tracing shadow rays / computing beam
                 // transmittance.  Probably shouldn't give those full weight

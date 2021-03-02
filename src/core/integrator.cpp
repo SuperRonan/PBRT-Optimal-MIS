@@ -215,10 +215,15 @@ Spectrum EstimateDirect(const Interaction &it, const Point2f &uScattering,
 }
 
 std::unique_ptr<Distribution1D> ComputeLightPowerDistribution(
-    const Scene &scene) {
-    if (scene.lights.empty()) return nullptr;
+    const Scene& scene) {
+    return ComputeLightPowerDistribution(scene.lights);
+}
+
+std::unique_ptr<Distribution1D> ComputeLightPowerDistribution(
+    std::vector<std::shared_ptr<Light>> const& lights) {
+    if (lights.empty()) return nullptr;
     std::vector<Float> lightPower;
-    for (const auto &light : scene.lights)
+    for (const auto &light : lights)
         lightPower.push_back(light->Power().y());
     return std::unique_ptr<Distribution1D>(
         new Distribution1D(&lightPower[0], lightPower.size()));

@@ -73,6 +73,9 @@ Spectrum EstimateDirect(const Interaction &it, const Point2f &uShading,
 std::unique_ptr<Distribution1D> ComputeLightPowerDistribution(
     const Scene &scene);
 
+std::unique_ptr<Distribution1D> ComputeLightPowerDistribution(
+    std::vector<std::shared_ptr<Light>> const& lights);
+
 // SamplerIntegrator Declarations
 class SamplerIntegrator : public Integrator {
   public:

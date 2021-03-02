@@ -4,6 +4,7 @@
 #include "light.h"
 #include "integrator.h"
 #include "lightdistrib.h"
+#include "guiding.h"
 
 
 #ifdef _MSC_VER
@@ -98,31 +99,45 @@ namespace pbrt
 
 	class SplattingTechnique : public LightSamplingTechnique
 	{
+	protected:
+		Scene const* scene;
+		const Light* envmap = nullptr;
+		float scene_radius;
 	public:
-
 		SplattingTechnique();
 
+		virtual void init(Scene const& scene, LightDistribution const&) override;
 	};
 
 	class BSDFTechnique : public SplattingTechnique
 	{
-	protected:
-
-		Scene const* scene;
-		const Light* envmap = nullptr;
-		float scene_radius;
-
 	public:
 
 		BSDFTechnique();
-
-		virtual void init(Scene const& scene, LightDistribution const&) override final;
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
 		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
 	};
 
+
+	class GuidingTechnique : public GatheringTechnique
+	{
+	protected:
+
+		std::unique_ptr<LightDistribution> light_distrib;
+
+	public:
+
+		GuidingTechnique();
+
+		virtual void init(Scene const& scene, LightDistribution const&) override;
+
+		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
+
+		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
+
+	};
 
 
 	// Though its behaviour is very close to fit in a SamplerIntegrator like the classic Path
