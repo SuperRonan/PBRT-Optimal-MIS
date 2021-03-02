@@ -5,6 +5,14 @@
 #include "progressreporter.h"
 #include "paramset.h"
 
+
+
+#define protected public
+#define private public
+#include "lights/diffuse.h"
+#undef protected
+#undef private
+
 namespace pbrt
 {
 	LightSamplingTechnique::LightSamplingTechnique(Type type):
@@ -175,23 +183,81 @@ namespace pbrt
 
 	void GuidingTechnique::init(Scene const& scene, LightDistribution const& distrib)
 	{
+		const auto acceptLight = [](Light const& light)
+		{
+			Point3f x, y, z;
+			return light.GetTriangleVertices(&x, &y, &z);
+		};
+
 		distribution = &distrib;
 		this->scene = &scene;
 
-		//light_distrib = std::make_unique<LightDistribution>()
-
 		for (size_t i = 0; i < scene.lights.size(); ++i)
 		{
-			lightToIndex[scene.lights[i].get()] = i;
+			const auto& light = scene.lights[i];
+			if (acceptLight(*light))
+			{
+				lights.push_back(light);
+				lightToIndex[light.get()] = lights.size()-1;
+			}
 		}
+		light_distrib = CreateLightSampleDistribution("power", scene, lights);
 	}
 
 
 	void GuidingTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
 	{
-		//GuidingDistribution gdstrb()
+		sample.type = LightSamplingTechnique::Type::Gathering;
+		if (lights.empty())
+		{
+			// Skip this sample, say that it failed
+			sample.pdf = 0;
+		}
+		Float select_light_pmf;
+		const Distribution1D* distrib = light_distrib->Lookup(ref.p);
+		int light_index = distrib->SampleDiscrete(lambda, &select_light_pmf);
+		sample.light = lights[light_index].get();
+
+		GuidingDistribution gdstrb = GuidingDistribution(ref, *sample.light);
+
+		bool is_ok = gdstrb.CanSample(GuidingDistribution::SamplingProjection::SphereSimple);
+		if (is_ok)
+		{
+			sample.wi = gdstrb.Sample_wi(xi, GuidingDistribution::SamplingProjection::SphereSimple, &sample.pdf);
+			if (sample.pdf > 0)
+			{
+				sample.pdf *= select_light_pmf;
+				sample.delta = false;
+				const DiffuseAreaLight* _light = dynamic_cast<const DiffuseAreaLight*>(sample.light);
+				assert(_light != nullptr);
+				// Get the contribution
+				{
+					Ray ray = ref.SpawnRay(sample.wi);
+					Float tHit;
+					SurfaceInteraction light_inter;
+					bool intersected = _light->shape->Intersect(ray, &tHit, &light_inter);
+					if (!intersected)
+					{
+						sample.pdf = 0;
+						return;
+					}
+					sample.estimate =  ref.bsdf->f(ref.wo, sample.wi) * _light->L(light_inter, -ray.d) * AbsDot(ref.shading.n, sample.wi) / sample.pdf;
+					sample.vis = VisibilityTester(ref, light_inter);
+				}
+			}
+		}
+		else
+		{
+			// Skip this sample, say that it failed
+			sample.pdf = 0;
+		}
 	}
 
+
+	Float GuidingTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const
+	{
+		return ref.bsdf->Pdf(ref.wo, sample.wi);
+	}
 
 
 
@@ -540,14 +606,14 @@ namespace pbrt
 			techs.push_back(liTech);
 		}
 
-		int n_Le = params.FindOneInt("Le", 0);
-		if (n_Le)
-		{
-			PathOptiIntegrator::Technique leTech;
-			leTech.n = n_Le;
-			leTech.technique = std::make_shared<LeTechnique>();
-			techs.push_back(leTech);
-		}
+		//int n_Le = params.FindOneInt("Le", 0);
+		//if (n_Le)
+		//{
+		//	PathOptiIntegrator::Technique leTech;
+		//	leTech.n = n_Le;
+		//	leTech.technique = std::make_shared<LeTechnique>();
+		//	techs.push_back(leTech);
+		//}
 
 		int n_bsdf = params.FindOneInt("BSDF", 0);
 		if (n_bsdf)
@@ -556,6 +622,15 @@ namespace pbrt
 			bsdfTech.n = n_bsdf;
 			bsdfTech.technique = std::make_shared<BSDFTechnique>();
 			techs.push_back(bsdfTech);
+		}
+
+		int n_guiding = params.FindOneInt("Guiding", 0);
+		if (n_guiding)
+		{
+			PathOptiIntegrator::Technique guidingTech;
+			guidingTech.n = n_guiding;
+			guidingTech.technique = std::make_shared<GuidingTechnique>();
+			techs.push_back(guidingTech);
 		}
 
 		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 

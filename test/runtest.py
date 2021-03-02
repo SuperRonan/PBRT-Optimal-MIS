@@ -31,6 +31,7 @@ scenes = [
 	#['./scenes/box-sphere.pbrt', 'box-sphere'],
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
+	['./scenes/cornell-triangle.pbrt', 'cornell-triangle'],
 	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
@@ -48,7 +49,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
-	[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
@@ -70,20 +71,21 @@ exec_filters = [
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct'),	
 
-	('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
-	('opath', 'power', [('BSDF', 1), ("Li", 1)]),
-	('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
+	('opath', 'direct', [('Guiding', 1)]),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	#(2, 3),
+	(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
-	(2, 7),
+	#(2, 7),
 	#(4, 4),
 	#(2, 8),
 	#(2, 9),
@@ -98,7 +100,7 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
-	#(2, 20),
+	#(2, 22),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),

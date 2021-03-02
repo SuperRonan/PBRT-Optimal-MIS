@@ -125,6 +125,7 @@ namespace pbrt
 	{
 	protected:
 
+		std::vector<std::shared_ptr<Light>> lights;
 		std::unique_ptr<LightDistribution> light_distrib;
 
 	public:
