@@ -256,7 +256,18 @@ namespace pbrt
 
 	Float GuidingTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample)const
 	{
-		return ref.bsdf->Pdf(ref.wo, sample.wi);
+		if (lights.empty())	return 0;
+		Float select_light_pmf = 0;
+		const Distribution1D* distrib = light_distrib->Lookup(ref.p);
+		if (lightToIndex.find(sample.light) == lightToIndex.end())	return 0;
+		const int light_index = lightToIndex.find(sample.light)->second;
+		select_light_pmf = distrib->DiscretePDF(light_index);
+
+		GuidingDistribution gdstrb = GuidingDistribution(ref, *sample.light);
+		if (!gdstrb.CanSample(GuidingDistribution::SamplingProjection::SphereSimple))	return 0;
+		
+		Float pdf = gdstrb.Pdf(sample.wi, GuidingDistribution::SamplingProjection::SphereSimple);
+		return pdf * select_light_pmf;
 	}
 
 

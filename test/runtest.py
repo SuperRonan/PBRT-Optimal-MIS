@@ -74,18 +74,20 @@ exec_filters = [
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
-	('opath', 'direct', [('Guiding', 1)]),
+	('opath', 'direct', [('Guiding', 1), ('BSDF', 1), ('Li', 1)]),
+	('opath', 'balance', [('Guiding', 1), ('BSDF', 1), ('Li', 1)]),
+	('opath', 'power', [('Guiding', 1), ('BSDF', 1), ('Li', 1)]),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
-	#(2, 7),
+	(2, 7),
 	#(4, 4),
 	#(2, 8),
 	#(2, 9),
