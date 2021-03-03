@@ -177,8 +177,9 @@ namespace pbrt
 
 
 
-	GuidingTechnique::GuidingTechnique():
-		GatheringTechnique()
+	GuidingTechnique::GuidingTechnique(GuidingDistribution::SamplingProjection type):
+		GatheringTechnique(),
+		projection_type(type)
 	{}
 
 	void GuidingTechnique::init(Scene const& scene, LightDistribution const& distrib)
@@ -220,10 +221,10 @@ namespace pbrt
 
 		GuidingDistribution gdstrb = GuidingDistribution(ref, *sample.light);
 
-		bool is_ok = gdstrb.CanSample(GuidingDistribution::SamplingProjection::SphereSimple);
+		bool is_ok = gdstrb.CanSample(projection_type);
 		if (is_ok)
 		{
-			sample.wi = gdstrb.Sample_wi(xi, GuidingDistribution::SamplingProjection::SphereSimple, &sample.pdf);
+			sample.wi = gdstrb.Sample_wi(xi, projection_type, &sample.pdf);
 			if (sample.pdf > 0)
 			{
 				sample.pdf *= select_light_pmf;
@@ -264,9 +265,9 @@ namespace pbrt
 		select_light_pmf = distrib->DiscretePDF(light_index);
 
 		GuidingDistribution gdstrb = GuidingDistribution(ref, *sample.light);
-		if (!gdstrb.CanSample(GuidingDistribution::SamplingProjection::SphereSimple))	return 0;
+		if (!gdstrb.CanSample(projection_type))	return 0;
 		
-		Float pdf = gdstrb.Pdf(sample.wi, GuidingDistribution::SamplingProjection::SphereSimple);
+		Float pdf = gdstrb.Pdf(sample.wi, projection_type);
 		return pdf * select_light_pmf;
 	}
 
@@ -635,13 +636,31 @@ namespace pbrt
 			techs.push_back(bsdfTech);
 		}
 
-		int n_guiding = params.FindOneInt("Guiding", 0);
-		if (n_guiding)
+		int n_SS = params.FindOneInt("SS", 0);
+		if (n_SS)
 		{
-			PathOptiIntegrator::Technique guidingTech;
-			guidingTech.n = n_guiding;
-			guidingTech.technique = std::make_shared<GuidingTechnique>();
-			techs.push_back(guidingTech);
+			PathOptiIntegrator::Technique ssTech;
+			ssTech.n = n_SS;
+			ssTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple);
+			techs.push_back(ssTech);
+		}
+
+		int n_SP = params.FindOneInt("SP", 0);
+		if (n_SP)
+		{
+			PathOptiIntegrator::Technique spTech;
+			spTech.n = n_SP;
+			spTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise);
+			techs.push_back(spTech);
+		}
+
+		int n_PP = params.FindOneInt("PP", 0);
+		if (n_PP)
+		{
+			PathOptiIntegrator::Technique ppTech;
+			ppTech.n = n_PP;
+			ppTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane);
+			techs.push_back(ppTech);
 		}
 
 		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 

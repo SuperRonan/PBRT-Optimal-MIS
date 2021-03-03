@@ -127,10 +127,11 @@ namespace pbrt
 
 		std::vector<std::shared_ptr<Light>> lights;
 		std::unique_ptr<LightDistribution> light_distrib;
+		GuidingDistribution::SamplingProjection projection_type;
 
 	public:
 
-		GuidingTechnique();
+		GuidingTechnique(GuidingDistribution::SamplingProjection type);
 
 		virtual void init(Scene const& scene, LightDistribution const&) override;
 
