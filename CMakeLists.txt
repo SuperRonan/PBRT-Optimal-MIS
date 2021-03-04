@@ -416,6 +416,7 @@ SET ( PBRT_CORE_SOURCE
   src/core/texture.cpp
   src/core/transform.cpp
   src/core/guiding.cpp
+  src/core/light_sampling.cpp
   )
 
 SET ( PBRT_CORE_HEADERS
@@ -460,6 +461,7 @@ SET ( PBRT_CORE_HEADERS
   src/core/texture.h
   src/core/transform.h
   src/core/guiding.h
+  src/core/light_sampling.h
   )
 
 FILE ( GLOB PBRT_SOURCE
