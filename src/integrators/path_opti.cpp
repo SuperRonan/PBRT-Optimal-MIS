@@ -146,8 +146,10 @@ namespace pbrt
 						Float* wbuffer = (Float*)arena.Alloc(sizeof(Float) * N);
 						L += TracePath(ray, scene, *tileSampler, arena, estimators.data(), wbuffer, rayWeight);
 					}
-					// Free _MemoryArena_ memory from computing image sample
-					// value
+					for (EstimatorPtr& estimator : estimators)
+						estimator->loop();
+
+					// Free _MemoryArena_ memory from computing image value
 					arena.Reset();
 				} while (tileSampler->StartNextSample());
 				L /= Float(sampler->samplesPerPixel);
@@ -324,6 +326,8 @@ namespace pbrt
 			h = MIS::Heuristic::Maximum;
 		else if (h_name == "direct")
 			h = MIS::Heuristic::Direct;
+		else if (h_name == "progressive")
+			h = MIS::Heuristic::Progressive;
 		else
 			Error(std::string(std::string("Heuristic ") + h_name + " is not recognized!").c_str());
 

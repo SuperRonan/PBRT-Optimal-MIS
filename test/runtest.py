@@ -60,7 +60,7 @@ scenes = [
 # Select your integrator
 # options: (name, heuristic, extra)
 exec_filters = [
-	#('path', ''),
+	('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
@@ -82,15 +82,16 @@ exec_filters = [
 	#('opath', 'balance', [('PP', 1)]),
 	#('opath', 'balance', [('Li', 1)]),
 	#('opath', 'balance', [('SP', 1)]),
-	('opath', 'direct', [('SS', 1), ("SP", 1)]),
+	('opath', 'progressive', [('SS', 1), ("SP", 1), ("Li", 1)]),
+	('opath', 'direct', [('SS', 1), ("SP", 1), ("Li", 1)]),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
-	#(2, 4),
+	#(2, 3),
+	(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
@@ -123,8 +124,8 @@ numbers_of_samples = [
 	#1,
 	#2,
 	#4, 
-	8, 
-	#16,
+	#8, 
+	16,
 	#32, 
 	#64, 
 	#128, 
