@@ -6,6 +6,8 @@
 #include "paramset.h"
 
 
+//#define CONSERVATIVE
+
 namespace pbrt
 {
 	PathOptiIntegrator::PathOptiIntegrator(
@@ -253,6 +255,10 @@ namespace pbrt
 					// skip it (consider it as a singular zero
 					continue;
 				}
+
+#ifndef CONSERVATIVE
+				if (sample.estimate.IsBlack())	continue;
+#endif
 				Spectrum estimate = beta * sample.estimate / Float(ni);
 				if (sample.type == LightSamplingTechnique::Type::Gathering)
 				{
@@ -260,11 +266,15 @@ namespace pbrt
 					Spectrum visibility = sample.vis.Tr(scene, sampler);
 					sample.visibility_passed = !visibility.IsBlack();
 					estimate *= visibility;
+#ifndef CONSERVATIVE
+					if (visibility.IsBlack())	continue;
+#endif
 				}
 				// Use the weights buffer to tmporarily store the PDFs
-				Float sum = sample.pdf;
+				Float sum = sample.pdf * ni;
+				// Effective PDFs actually
 				Float*& pdfs = wbuffer;
-				pdfs[i] = sample.pdf;
+				pdfs[i] = sum;
 				for (int l = 0; l < N; ++l)
 				{
 					if (l != i)
@@ -276,9 +286,9 @@ namespace pbrt
 							pdfs[l] = 0;
 						else
 						{
-							Float pdf = techniques[l].technique->pdf(it, sample);
-							pdfs[l] = pdf;
-							sum += pdf;
+							Float ql = techniques[l].technique->pdf(it, sample) * techniques[l].n;
+							pdfs[l] = ql;
+							sum += ql;
 						}
 					}
 				}

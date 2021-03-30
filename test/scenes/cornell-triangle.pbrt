@@ -1,6 +1,6 @@
 
 ##INTEGRATOR-DEF-START
-Integrator "opath" "integer Guiding" 1
+Integrator "opath" "integer SS" 1
 ##INTEGRATOR-DEF-END
 Transform [ 1 -0 -0 -0 -0 1 -0 -0 -0 -0 -1 -0 -0 -1 6.8 1]
 ##SAMPLER-DEF-START

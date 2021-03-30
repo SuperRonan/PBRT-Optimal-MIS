@@ -210,6 +210,7 @@ namespace pbrt
 		{
 			// Skip this sample, say that it failed
 			sample.pdf = 0;
+			return;
 		}
 		Float select_light_pmf;
 		const Distribution1D* distrib = light_distrib->Lookup(ref.p);
