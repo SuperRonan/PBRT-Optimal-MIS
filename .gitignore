@@ -7,3 +7,4 @@ build
 test/scene.pbrt
 test/results
 test/__pycache__
+test/benchmarks/

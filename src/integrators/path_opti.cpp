@@ -5,9 +5,6 @@
 #include "progressreporter.h"
 #include "paramset.h"
 
-
-//#define CONSERVATIVE
-
 namespace pbrt
 {
 	PathOptiIntegrator::PathOptiIntegrator(
@@ -17,14 +14,16 @@ namespace pbrt
 		const Bounds2i& pixelBounds,
 		MIS::Heuristic h,
 		std::vector<Technique> const& techniques,
-		const std::string& lightSampleStrategy) :
+		const std::string& lightSampleStrategy,
+		bool conservative) :
 		maxDepth(maxDepth),
 		lightSampleStrategy(lightSampleStrategy),
 		heuristic(h),
 		camera(camera),
 		sampler(sampler),
 		techniques(techniques),
-		pixelBounds(pixelBounds)
+		pixelBounds(pixelBounds),
+		conservative(conservative)
 	{}
 
 	PathOptiIntegrator::~PathOptiIntegrator()
@@ -74,7 +73,9 @@ namespace pbrt
 			Warning("Path Opti Integrator: Cannot render without any techniques!");
 			return;
 		}
+		std::cout << "Preprocessing..." << std::endl;
 		Preprocess(scene, *sampler);
+		std::cout << "Conservative: " << conservative << std::endl;
 
 		// Compute number of tiles, _nTiles_, to use for parallel rendering
 		Bounds2i sampleBounds = camera->film->GetSampleBounds();
@@ -217,7 +218,11 @@ namespace pbrt
 
 			// Draw the samples from multiple techniques to estimate direct lighting
 			// And feed the samples to the estimator
-			directLighting(isect, scene, beta, arena, sampler, estimator, wbuffer);
+			if (conservative)
+				directLighting<true>(isect, scene, beta, arena, sampler, estimator, wbuffer);
+			else
+				directLighting<false>(isect, scene, beta, arena, sampler, estimator, wbuffer);
+
 
 			// Sample the BSDF to continue the path
 			Vector3f wo = -ray.d, wi;
@@ -234,7 +239,7 @@ namespace pbrt
 		return res;
 	}
 
-
+	template <bool CONSERVATIVE>
 	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, Spectrum const& beta, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
 	{
 		using Sample = LightSamplingTechnique::Sample;
@@ -256,9 +261,9 @@ namespace pbrt
 					continue;
 				}
 
-#ifndef CONSERVATIVE
-				if (sample.estimate.IsBlack())	continue;
-#endif
+				if constexpr (!CONSERVATIVE)
+					if (sample.estimate.IsBlack())	continue; // skip the zero contribution sample
+
 				Spectrum estimate = beta * sample.estimate / Float(ni);
 				if (sample.type == LightSamplingTechnique::Type::Gathering)
 				{
@@ -266,9 +271,9 @@ namespace pbrt
 					Spectrum visibility = sample.vis.Tr(scene, sampler);
 					sample.visibility_passed = !visibility.IsBlack();
 					estimate *= visibility;
-#ifndef CONSERVATIVE
-					if (visibility.IsBlack())	continue;
-#endif
+					
+					if constexpr (!CONSERVATIVE)
+						if (visibility.IsBlack())	continue; // skipe the zero contribution sample 
 				}
 				// Use the weights buffer to tmporarily store the PDFs
 				Float sum = sample.pdf * ni;
@@ -401,6 +406,8 @@ namespace pbrt
 			techs.push_back(ppTech);
 		}
 
-		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy); 
+		bool conservative = params.FindOneBool("conservative", true);
+
+		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy, conservative); 
 	}
 }

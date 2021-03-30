@@ -54,8 +54,9 @@ class PBRTSceneFile:
 def sampler_str(n):
 	return 'Sampler "random" "integer pixelsamples" %d' % (n)
 
-def integrator_string(integrator_name, min_depth, max_depth, heuristic, max_opti_depth):
-	res = 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s"' % (integrator_name, max_depth, min_depth, heuristic)
+def integrator_string(integrator_name, min_depth, max_depth, heuristic, max_opti_depth, is_conservative):
+	conservative_str = 'true' if is_conservative else 'false'
+	res = 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s" "bool conservative" "%s"' % (integrator_name, max_depth, min_depth, heuristic, conservative_str)
 	if max_opti_depth is not None:
 		res += '"integer maxoptidepth" [ %d ]' % max_opti_depth
 	return res
@@ -76,7 +77,9 @@ def techniques_name(techniques):
 	return res
 
 def integrator_str(options, min_depth, max_depth, max_opti_depth):
-	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth)
+	is_conservative = any([option == 'conservative' for option in options])
+
+	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth, is_conservative)
 	if options[0] == 'opath' and len(options) >= 3:
 		techniques = options[2]
 		res += techniques_string(techniques)
@@ -90,5 +93,8 @@ def filter_name(options, max_opti_depth):
 		res += techniques_name(options[2]) 
 	if max_opti_depth is not None:
 		res += "_mo%d" % max_opti_depth
+	is_conservative = any([option == 'conservative' for option in options])
+	if is_conservative:
+		res += '_conservative'
 	return res
 

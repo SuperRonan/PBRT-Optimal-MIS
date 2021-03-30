@@ -50,7 +50,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
-	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
@@ -58,7 +58,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 ]
 
@@ -74,7 +74,8 @@ exec_filters = [
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	#('obdpt', 'direct'),	
+	('obdpt', 'direct', 'conservative'),	
+	('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -92,7 +93,7 @@ exec_filters = [
 	#('opath', 'direct', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'balance', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1), ('BSDF', 1)]),
-	('opath', 'direct', [('SP', 1), ('PP', 1)]),
+	#('opath', 'direct', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
 ]
 
@@ -100,7 +101,7 @@ exec_filters = [
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
@@ -118,7 +119,7 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
-	#(2, 22),
+	(2, 22),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),

@@ -47,10 +47,6 @@
 // Very ineficient, for research purpose only
 //#define UBDPT
 
-
-//#define CONSERVATIVE
-
-
 namespace pbrt {
 
     STAT_PERCENT("Integrator/Zero-radiance paths", zeroRadiancePaths, totalPaths);
@@ -164,6 +160,14 @@ namespace pbrt {
     void OBDPTIntegrator::Render(const Scene& scene) {
         std::unique_ptr<LightDistribution> lightDistribution =
             CreateLightSampleDistribution(lightSampleStrategy, scene);
+
+        std::cout << "Rendering with setting: \n";
+        std::cout << "Conservative: " << conservative << std::endl;
+#ifdef UBDPT
+        std::cout << "Uncorellated: 1" << std::endl;
+#else   
+        std::cout << "Uncorellated: 0" << std::endl;
+#endif
 
         // Compute a reverse mapping from light pointers to offsets into the
         // scene lights vector (and, equivalently, offsets into
@@ -289,10 +293,16 @@ namespace pbrt {
                                     else
                                     {
                                         bool sparseZero = true;
-                                        estimate = ConnectOBDPT(
-                                            scene, lightVertices, cameraVertices, s, t,
-                                            *lightDistr, lightToIndex, *camera, *tileSampler,
-                                            &pFilmNew, balanceWeights, sparseZero);
+                                        if(conservative)
+                                            estimate = ConnectOBDPT<true>(
+                                                scene, lightVertices, cameraVertices, s, t,
+                                                *lightDistr, lightToIndex, *camera, *tileSampler,
+                                                &pFilmNew, balanceWeights, sparseZero);
+                                        else
+                                            estimate = ConnectOBDPT<false>(
+                                                scene, lightVertices, cameraVertices, s, t,
+                                                *lightDistr, lightToIndex, *camera, *tileSampler,
+                                                &pFilmNew, balanceWeights, sparseZero);
 
                                         if (!sparseZero)
                                         {
@@ -349,6 +359,7 @@ namespace pbrt {
     }
 
     // This function also needs to prove that the sample is not sparse zero
+    template <bool CONSERVATIVE>
     Spectrum ConnectOBDPT(
         const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
         int t, const Distribution1D& lightDistr,
@@ -396,10 +407,9 @@ namespace pbrt {
                     if (qs.IsOnSurface()) L *= AbsDot(wi, qs.ns());
                     DCHECK(!L.HasNaNs());
                     // Only check visibility after we know that the path would
-                    // make a non-zero contribution.
-#ifndef CONSERVATIVE
-                    if (!L.IsBlack())
-#endif
+                    // make a non-zero contribution. (for non conservative estimation)
+                    bool check_vis = CONSERVATIVE || !L.IsBlack();
+                    if (check_vis)
                     {
                         Spectrum V = vis.Tr(scene, sampler);
                         L *= V;
@@ -431,10 +441,9 @@ namespace pbrt {
                     s1Pdf = pdfArea * lightPdf;
                     L = pt.beta * pt.f(sampled, TransportMode::Radiance) * sampled.beta;
                     if (pt.IsOnSurface()) L *= AbsDot(wi, pt.ns());
-                    // Only check visibility if the path would carry radiance.
-#ifndef CONSERVATIVE
-                    if (!L.IsBlack())
-#endif
+                    // Only check visibility if the path would carry radiance. (for conservative estimation)
+                    bool check_vis = CONSERVATIVE || !L.IsBlack();
+                    if (check_vis)
                     {
                         Spectrum V = vis.Tr(scene, sampler);
                         L *= V;
@@ -452,9 +461,8 @@ namespace pbrt {
                     " qs: " << qs << ", pt: " << pt << ", qs.f(pt): " << qs.f(pt, TransportMode::Importance) <<
                     ", pt.f(qs): " << pt.f(qs, TransportMode::Radiance) << ", G: " << G(scene, sampler, qs, pt) <<
                     ", dist^2: " << DistanceSquared(qs.p(), pt.p());
-#ifndef CONSERVATIVE
-                if (!L.IsBlack())
-#endif
+                bool check_vis = CONSERVATIVE || !L.IsBlack();
+                if (check_vis)
                 {
                     Spectrum geometry = G(scene, sampler, qs, pt);
                     L *= geometry;
@@ -519,10 +527,12 @@ namespace pbrt {
         else
             Error(std::string(std::string("Heuristic ") + h_name + " is not recognized!").c_str());
 
+        bool conservative = params.FindOneBool("conservative", false);
+
 
         std::string lightStrategy = params.FindOneString("lightsamplestrategy",
             "power");
-        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy);
+        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy, conservative);
     }
 
 }  // namespace pbrt
