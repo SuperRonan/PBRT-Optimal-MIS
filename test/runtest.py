@@ -50,7 +50,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'white-room/whiteroom-night.pbrt', 'whiteroom-night'],
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
-	[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
@@ -58,7 +58,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 ]
 
@@ -74,8 +74,8 @@ exec_filters = [
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	('obdpt', 'direct', 'conservative'),	
-	('obdpt', 'direct'),	
+	#('obdpt', 'direct', 'conservative'),	
+	#('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -87,13 +87,18 @@ exec_filters = [
 	#('opath', 'balance', [('SS', 1)]),
 	#('opath', 'balance', [('PP', 1)]),
 	#('opath', 'balance', [('Li', 1)]),
-	#('opath', 'balance', [('SP', 1)]),
+	#('opath', 'balance', [('SP', 2)]),
+	#('opath', 'balance', [('BSDF', 1)]),
 	#('opath', 'progressive', [('SS', 1), ("SP", 1), ("Li", 1)]),
 	#('opath', 'direct', [('SS', 1), ("SP", 1), ("Li", 1)]),
 	#('opath', 'direct', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'balance', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1), ('BSDF', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)]),
+	#('opath', 'direct', [('SP', 1), ('PP', 1)], 'conservative'),
+	#('opath', 'progressive', [('SP', 1), ('PP', 1)]),
+	('opath', 'progressive', [('SP', 1), ('PP', 1)], 'conservative'),
+	('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
 ]
 
@@ -102,7 +107,7 @@ exec_filters = [
 min_max= [
 	#(2, 2),
 	#(2, 3),
-	#(2, 4),
+	(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
@@ -119,7 +124,7 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
-	(2, 22),
+	#(2, 22),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),
@@ -134,7 +139,7 @@ min_max= [
 numbers_of_samples = [
 	#1,
 	#2,
-	#4, 
+	#4,
 	#8, 
 	16,
 	#32, 
@@ -150,6 +155,15 @@ numbers_of_samples = [
 	#32768,
 	#65536,
 	#131072,
+]
+
+samplers = [
+	'random',
+	'stratified',
+	'halton',
+	'02sequence',
+	'sobol',
+	'maxmindist',
 ]
 
 def main(args, i=None):
@@ -176,45 +190,47 @@ def main(args, i=None):
 				pbrt_scene = PBRTSceneFile(scene_path)
 
 				for exec_filter in exec_filters:
-					print('#' * 200)
-					print("depths: ", mm)
-					print(number_of_samples, " samples per pixel")  
-					print("Scene name: ", scene_info[1])
-					print("Integrator: ", exec_filter)
+					for sampler in samplers:
+						print('#' * 200)
+						print("depths: ", mm)
+						print(number_of_samples, " samples per pixel")  
+						print("Scene name: ", scene_info[1])
+						print("Integrator: ", exec_filter)
+						print('Sampler: ', sampler)
 
-					pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
-					pbrt_scene.sampler = sampler_str(number_of_samples)
-					
-					pbrt_scene.makeTmp()
+						pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth)
+						pbrt_scene.sampler = sampler_str(sampler, number_of_samples)
+						
+						pbrt_scene.makeTmp()
 
-					name = filter_name(exec_filter, max_opti_depth)
-					imgname = name + '.exr'
-					filenames.append(imgname)
+						name = filter_name(exec_filter, max_opti_depth, sampler)
+						imgname = name + '.exr'
+						filenames.append(imgname)
 
-					if not os.path.exists(result_folder + sub_folder):
-						os.makedirs(result_folder + sub_folder)				
-					
-					command = [pbrt_exe, pbrt_scene.tmp_filename, '--outfile', result_folder + sub_folder + imgname, '--nthreads', str(num_threads)]
-					if i is not None:
-						folder = 'benchmarks/' + sub_folder
-						if not os.path.exists(folder):
-							os.mkdir(folder)
-						filename = name + '_' + str(i) + '.txt'
-						f = open(folder + filename, "w")
-						res = subprocess.call(command, stdout=f)
-						f.close()
-					else:
-						res = subprocess.call(command)
-					
-					results.append([sub_folder+imgname, res])
+						if not os.path.exists(result_folder + sub_folder):
+							os.makedirs(result_folder + sub_folder)				
+						
+						command = [pbrt_exe, pbrt_scene.tmp_filename, '--outfile', result_folder + sub_folder + imgname, '--nthreads', str(num_threads)]
+						if i is not None:
+							folder = 'benchmarks/' + sub_folder
+							if not os.path.exists(folder):
+								os.mkdir(folder)
+							filename = name + '_' + str(i) + '.txt'
+							f = open(folder + filename, "w")
+							res = subprocess.call(command, stdout=f)
+							f.close()
+						else:
+							res = subprocess.call(command)
+						
+						results.append([sub_folder+imgname, res])
 
-					total = total + 1
+						total = total + 1
 
-					if(res == 0):
-						print(('\n%s' + Fore.GREEN + ' returned %i' + Style.RESET_ALL) % (str(command), res))
-						passed = passed + 1
-					else:
-						print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
+						if(res == 0):
+							print(('\n%s' + Fore.GREEN + ' returned %i' + Style.RESET_ALL) % (str(command), res))
+							passed = passed + 1
+						else:
+							print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 				
 				pbrt_scene.finish()
 

@@ -51,8 +51,8 @@ class PBRTSceneFile:
 
 
 
-def sampler_str(n):
-	return 'Sampler "random" "integer pixelsamples" %d' % (n)
+def sampler_str(s, n):
+	return 'Sampler "%s" "integer pixelsamples" %d' % (s, n)
 
 def integrator_string(integrator_name, min_depth, max_depth, heuristic, max_opti_depth, is_conservative):
 	conservative_str = 'true' if is_conservative else 'false'
@@ -85,7 +85,7 @@ def integrator_str(options, min_depth, max_depth, max_opti_depth):
 		res += techniques_string(techniques)
 	return res
 
-def filter_name(options, max_opti_depth):
+def filter_name(options, max_opti_depth, sampler):
 	res = options[0]
 	if options[0] == 'obdpt' or options[0] == 'opath':
 		res += '_' + options[1]
@@ -96,5 +96,7 @@ def filter_name(options, max_opti_depth):
 	is_conservative = any([option == 'conservative' for option in options])
 	if is_conservative:
 		res += '_conservative'
+	if sampler != 'random':
+		res += '_' + sampler
 	return res
 

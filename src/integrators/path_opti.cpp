@@ -260,8 +260,8 @@ namespace pbrt
 					// skip it (consider it as a singular zero
 					continue;
 				}
-
-				if constexpr (!CONSERVATIVE)
+				const bool is_conservative = CONSERVATIVE;
+				if constexpr (!is_conservative)
 					if (sample.estimate.IsBlack())	continue; // skip the zero contribution sample
 
 				Spectrum estimate = beta * sample.estimate / Float(ni);
@@ -272,11 +272,11 @@ namespace pbrt
 					sample.visibility_passed = !visibility.IsBlack();
 					estimate *= visibility;
 					
-					if constexpr (!CONSERVATIVE)
-						if (visibility.IsBlack())	continue; // skipe the zero contribution sample 
+					if constexpr (!is_conservative)
+						if (visibility.IsBlack())	continue; // skip the zero contribution sample 
 				}
 				// Use the weights buffer to tmporarily store the PDFs
-				Float sum = sample.pdf * ni;
+				Float sum = sample.pdf * Float(ni);
 				// Effective PDFs actually
 				Float*& pdfs = wbuffer;
 				pdfs[i] = sum;
@@ -284,10 +284,10 @@ namespace pbrt
 				{
 					if (l != i)
 					{
-						bool other_type_is_zero =
+						bool other_type_is_zero = sample.delta ||
 							(sample.type == LightSamplingTechnique::Type::Gathering && !sample.visibility_passed) ||
 							(sample.type == LightSamplingTechnique::Type::Splatting && sample.light == nullptr);
-						if (sample.type != techniques[l].technique->type && (sample.delta || other_type_is_zero))
+						if (sample.type != techniques[l].technique->type && (other_type_is_zero))
 							pdfs[l] = 0;
 						else
 						{
