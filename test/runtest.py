@@ -69,13 +69,13 @@ exec_filters = [
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	#('obdpt', 'balance'),
+	('obdpt', 'balance'),
 	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	#('obdpt', 'direct', 'conservative'),	
-	#('obdpt', 'direct'),	
+	('obdpt', 'direct', 'conservative'),	
+	('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -97,8 +97,8 @@ exec_filters = [
 	#('opath', 'direct', [('SP', 1), ('PP', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)], 'conservative'),
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)]),
-	('opath', 'progressive', [('SP', 1), ('PP', 1)], 'conservative'),
-	('opath', 'balance', [('SP', 1), ('PP', 1)]),
+	#('opath', 'progressive', [('SP', 1), ('PP', 1)], 'conservative'),
+	#('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
 ]
 
@@ -158,12 +158,16 @@ numbers_of_samples = [
 ]
 
 samplers = [
-	'random',
-	'stratified',
-	'halton',
-	'02sequence',
-	'sobol',
-	'maxmindist',
+	#'random',
+	#'stratified',
+	#'halton',
+	#'02sequence',
+	#'sobol',
+	#'maxmindist',
+	'z',
+	'zhash',
+	'z-art',
+	'morton',
 ]
 
 def main(args, i=None):

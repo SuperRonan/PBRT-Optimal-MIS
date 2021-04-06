@@ -89,6 +89,8 @@
 #include "samplers/sobol.h"
 #include "samplers/stratified.h"
 #include "samplers/zerotwosequence.h"
+#include "samplers/zhash.h"
+#include "samplers/z.h"  
 #include "shapes/cone.h"
 #include "shapes/curve.h"
 #include "shapes/cylinder.h"
@@ -831,6 +833,14 @@ std::shared_ptr<Sampler> MakeSampler(const std::string &name,
         sampler = CreateRandomSampler(paramSet);
     else if (name == "stratified")
         sampler = CreateStratifiedSampler(paramSet);
+    else if (name == "z")
+        sampler = CreateZSampler(paramSet, film->GetSampleBounds());
+    else if (name == "zhash")
+        sampler = CreateZHashSampler(paramSet, film->GetSampleBounds());
+    else if (name == "z-art")
+        sampler = CreateZ_ARTSampler(paramSet, film->GetSampleBounds());
+    else if (name == "morton")
+        sampler = CreateMortonSampler(paramSet, film->GetSampleBounds());
     else
         Warning("Sampler \"%s\" unknown.", name.c_str());
     paramSet.ReportUnused();
