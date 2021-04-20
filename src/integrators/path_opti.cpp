@@ -367,6 +367,9 @@ namespace pbrt
 			techs.push_back(bsdfTech);
 		}
 
+
+		const std::vector<std::string> available_strats = { "uniform", "power", "spatial" };
+
 		int n_SS = params.FindOneInt("SS", 0);
 		if (n_SS)
 		{
@@ -375,6 +378,20 @@ namespace pbrt
 			ssTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple, lightStrategy);
 			techs.push_back(ssTech);
 		}
+
+		for (std::string const& strat : available_strats)
+		{
+			std::string tech_str = strat + "-SS";
+			int n = params.FindOneInt(tech_str, 0);
+			if (n)
+			{
+				PathOptiIntegrator::Technique strat_ss;
+				strat_ss.n = n;
+				strat_ss.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple, strat);
+				techs.push_back(strat_ss);
+			}
+		}
+
 
 		int n_SP = params.FindOneInt("SP", 0);
 		if (n_SP)
@@ -385,6 +402,20 @@ namespace pbrt
 			techs.push_back(spTech);
 		}
 
+		for (std::string const& strat : available_strats)
+		{
+			std::string tech_str = strat + "-SP";
+			int n = params.FindOneInt(tech_str, 0);
+			if (n)
+			{
+				PathOptiIntegrator::Technique strat_sp;
+				strat_sp.n = n;
+				strat_sp.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise, strat);
+				techs.push_back(strat_sp);
+			}
+		}
+
+
 		int n_PP = params.FindOneInt("PP", 0);
 		if (n_PP)
 		{
@@ -394,6 +425,20 @@ namespace pbrt
 			techs.push_back(ppTech);
 		}
 
+		for (std::string const& strat : available_strats)
+		{
+			std::string tech_str = strat + "-PP";
+			int n = params.FindOneInt(tech_str, 0);
+			if (n)
+			{
+				PathOptiIntegrator::Technique strat_pp;
+				strat_pp.n = n;
+				strat_pp.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane, strat);
+				techs.push_back(strat_pp);
+			}
+		}
+
+
 		int n_Li = params.FindOneInt("Li", 0);
 		if (n_Li)
 		{
@@ -402,6 +447,20 @@ namespace pbrt
 			liTech.technique = std::make_shared<LiTechnique>(lightStrategy);
 			techs.push_back(liTech);
 		}
+
+		for (std::string const& strat : available_strats)
+		{
+			std::string tech_str = strat + "-Li";
+			int n = params.FindOneInt(tech_str, 0);
+			if (n)
+			{
+				PathOptiIntegrator::Technique strat_li;
+				strat_li.n = n;
+				strat_li.technique = std::make_shared<LiTechnique>(strat);
+				techs.push_back(strat_li);
+			}
+		}
+
 
 		bool conservative = params.FindOneBool("conservative", true);
 

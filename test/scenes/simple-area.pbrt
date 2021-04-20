@@ -12,7 +12,7 @@ Sampler "random" "integer pixelsamples" 16
 
 ##INTEGRATOR-DEF-START
 
-Integrator "opath" "integer maxdepth" [1] "string heuristic" "progressive" "integer SP" [ 1 ] "integer PP" [ 1 ]
+Integrator "opath" "integer maxdepth" [1] "string heuristic" "balance" "integer power-Li" [ 1 ] "integer spatial-Li" [ 1 ]
 
 #Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "full"
 #Integrator "bdpt" "integer maxdepth" [1] "string misweights" "optimal" "string lighttracer" "no"
