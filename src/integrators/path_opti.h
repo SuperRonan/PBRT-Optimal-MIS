@@ -40,8 +40,8 @@ namespace pbrt
 
 		const int maxDepth;
 		
+		// default...
 		const std::string lightSampleStrategy;
-		std::unique_ptr<LightDistribution> lightDistrib;
 
 		using Estimator = MIS::Estimator<Spectrum, Float>;
 		using EstimatorPtr = Estimator*;

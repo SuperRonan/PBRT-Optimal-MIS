@@ -31,7 +31,7 @@ namespace pbrt
 
 		LightSamplingTechnique(Type type);
 
-		virtual void init(Scene const& scene, LightDistribution const& distrib) {};
+		virtual void init(Scene const& scene) {};
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const = 0;
 
@@ -39,57 +39,104 @@ namespace pbrt
 
 	};
 
+	class LightSelector
+	{
+	protected:
+
+		std::string strategy;
+		std::shared_ptr<LightDistribution> distribution;
+		std::unordered_map<const Light*, size_t> light_to_index;
+
+	public:
+		
+		std::vector<std::shared_ptr<Light>> lights;
+
+		LightSelector(std::string const& strategy);
+
+		void init(Scene const& scene);
+
+		void init(Scene const& scene, std::vector<std::shared_ptr<Light>> const& lights);
+
+		void select(const SurfaceInteraction& ref, Float lambda, const Light*& light, Float& pmf)const;
+
+		Float pmf(const SurfaceInteraction& ref, const Light* light)const;
+	};
+
 	class GatheringTechnique : public LightSamplingTechnique
 	{
 	protected:
 
-		LightDistribution const* distribution;
-		std::unordered_map<const Light*, size_t> lightToIndex;
+		static std::unordered_map<std::string, std::shared_ptr<LightSelector>> distributions;
+		std::string strategy;
+		std::shared_ptr<LightSelector> distribution;
 		Scene const* scene;
 
 	public:
 
-		GatheringTechnique();
+		static void flushDistributions();
 
-		virtual void init(Scene const& scene, LightDistribution const& distrib) override;
+		std::shared_ptr<LightSelector> getSelector(std::vector<std::shared_ptr<Light>> const& lights, std::string const& specificity="");
 
-		void selectLight(const SurfaceInteraction& ref, Float lambda, const Light*& light, Float& pdf) const;
+		std::shared_ptr<LightSelector> getSelector(std::string const& specificity = "");
 
-		Float pdfSelectLight(const SurfaceInteraction& ref, const Light* light) const;
+		static std::shared_ptr<LightSelector> getSelector(std::string const& strategy, Scene const& scene, std::vector<std::shared_ptr<Light>> const& lights, std::string const& specificity="");
+
+		GatheringTechnique(std::string const& strategy);
+
+		virtual void init(Scene const& scene) override;
 	};
 
 	class LiTechnique : public GatheringTechnique
 	{
 	public:
 
-		LiTechnique();
+		LiTechnique(std::string const& strategy);
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
 		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
 	};
 
-	class LeTechnique : public GatheringTechnique
+	class GuidingTechnique : public GatheringTechnique
 	{
+	protected:
+
+		GuidingDistribution::SamplingProjection projection_type;
+
 	public:
 
-		LeTechnique();
+		GuidingTechnique(GuidingDistribution::SamplingProjection type, std::string const& strategy);
+
+		virtual void init(Scene const& scene) override;
 
 		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
 
 		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
+
 	};
+
+
+	//class LeTechnique : public GatheringTechnique
+	//{
+	//public:
+
+	//	LeTechnique();
+
+	//	virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
+
+	//	virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
+	//};
 
 	class SplattingTechnique : public LightSamplingTechnique
 	{
 	protected:
-		Scene const* scene;
+		Scene const* scene = nullptr;
 		const Light* envmap = nullptr;
-		float scene_radius;
+		float scene_radius = 0;
 	public:
 		SplattingTechnique();
 
-		virtual void init(Scene const& scene, LightDistribution const&) override;
+		virtual void init(Scene const& scene) override;
 	};
 
 	class BSDFTechnique : public SplattingTechnique
@@ -104,23 +151,5 @@ namespace pbrt
 	};
 
 
-	class GuidingTechnique : public GatheringTechnique
-	{
-	protected:
 
-		std::vector<std::shared_ptr<Light>> lights;
-		std::unique_ptr<LightDistribution> light_distrib;
-		GuidingDistribution::SamplingProjection projection_type;
-
-	public:
-
-		GuidingTechnique(GuidingDistribution::SamplingProjection type);
-
-		virtual void init(Scene const& scene, LightDistribution const&) override;
-
-		virtual void sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const final override;
-
-		virtual Float pdf(const SurfaceInteraction& ref, Sample const& sample) const final override;
-
-	};
 }

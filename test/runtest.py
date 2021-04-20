@@ -33,11 +33,13 @@ scenes = [
 	#['./scenes/box-point.pbrt', 'box-point'],
 	#['./scenes/box-invert.pbrt', 'box-invert'],
 	#['./scenes/cornell-triangle.pbrt', 'cornell-triangle'],
+	#['./scenes/cornell-large-light.pbrt', 'cornell-large'],
+	#['./scenes/cornell-small-light.pbrt', 'cornell-small'],
 	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/bidir.pbrt', 'veach-bidir'],
-	#[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
+	[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-night.pbrt', 'pavilion-night'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-day.pbrt', 'pavilion-day'],
 	#[pbrt_scenes_folder + 'breakfast/breakfast.pbrt', 'breakfast'],
@@ -58,7 +60,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 ]
 
@@ -67,15 +69,15 @@ scenes = [
 exec_filters = [
 	#('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
-	#('bdpt', ''),
+	('bdpt', ''),
 
-	('obdpt', 'balance'),
+	#('obdpt', 'balance'),
 	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	('obdpt', 'direct', 'conservative'),	
-	('obdpt', 'direct'),	
+	#('obdpt', 'direct', 'conservative'),	
+	#('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -107,7 +109,7 @@ exec_filters = [
 min_max= [
 	#(2, 2),
 	#(2, 3),
-	(2, 4),
+	#(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
@@ -124,7 +126,7 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
-	#(2, 22),
+	(2, 22, 4),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),
@@ -139,9 +141,10 @@ min_max= [
 numbers_of_samples = [
 	#1,
 	#2,
+	#3,
 	#4,
 	#8, 
-	16,
+	#16,
 	#32, 
 	#64, 
 	#128, 
@@ -152,22 +155,22 @@ numbers_of_samples = [
 	#4096,
 	#8192,
 	#16384,
-	#32768,
+	32768,
 	#65536,
 	#131072,
 ]
 
 samplers = [
-	#'random',
+	'random',
 	#'stratified',
 	#'halton',
 	#'02sequence',
 	#'sobol',
 	#'maxmindist',
-	'z',
-	'zhash',
-	'z-art',
-	'morton',
+	#'z',
+	#'zhash',
+	#'z-art',
+	#'morton',
 ]
 
 def main(args, i=None):

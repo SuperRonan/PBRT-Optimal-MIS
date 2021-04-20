@@ -39,7 +39,6 @@ namespace pbrt
 
 	void PathOptiIntegrator::Preprocess(const Scene& scene, Sampler& sampler)
 	{
-		lightDistrib = CreateLightSampleDistribution(lightSampleStrategy, scene);
 		const int threads = NumSystemCores();
 		// numtechs
 		int N = techniques.size();
@@ -62,7 +61,7 @@ namespace pbrt
 
 		for (Technique& tech : techniques)
 		{
-			tech.technique->init(scene, *lightDistrib);
+			tech.technique->init(scene);
 		}
 	}
 
@@ -212,8 +211,6 @@ namespace pbrt
 				continue;
 			}
 
-			const Distribution1D* distrib = lightDistrib->Lookup(isect.p);
-
 			Estimator& estimator = *estimators[depth]; // Get the estimator for the current depth
 
 			// Draw the samples from multiple techniques to estimate direct lighting
@@ -352,15 +349,6 @@ namespace pbrt
 		// Sampling techniques
 		std::vector<PathOptiIntegrator::Technique> techs;
 
-		int n_Li = params.FindOneInt("Li", 0);
-		if (n_Li)
-		{
-			PathOptiIntegrator::Technique liTech;
-			liTech.n = n_Li;
-			liTech.technique = std::make_shared<LiTechnique>();
-			techs.push_back(liTech);
-		}
-
 		//int n_Le = params.FindOneInt("Le", 0);
 		//if (n_Le)
 		//{
@@ -384,7 +372,7 @@ namespace pbrt
 		{
 			PathOptiIntegrator::Technique ssTech;
 			ssTech.n = n_SS;
-			ssTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple);
+			ssTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple, lightStrategy);
 			techs.push_back(ssTech);
 		}
 
@@ -393,7 +381,7 @@ namespace pbrt
 		{
 			PathOptiIntegrator::Technique spTech;
 			spTech.n = n_SP;
-			spTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise);
+			spTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise, lightStrategy);
 			techs.push_back(spTech);
 		}
 
@@ -402,8 +390,17 @@ namespace pbrt
 		{
 			PathOptiIntegrator::Technique ppTech;
 			ppTech.n = n_PP;
-			ppTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane);
+			ppTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane, lightStrategy);
 			techs.push_back(ppTech);
+		}
+
+		int n_Li = params.FindOneInt("Li", 0);
+		if (n_Li)
+		{
+			PathOptiIntegrator::Technique liTech;
+			liTech.n = n_Li;
+			liTech.technique = std::make_shared<LiTechnique>(lightStrategy);
+			techs.push_back(liTech);
 		}
 
 		bool conservative = params.FindOneBool("conservative", true);
