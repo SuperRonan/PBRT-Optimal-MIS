@@ -185,6 +185,8 @@ namespace pbrt {
         const int nXTiles = (sampleExtent.x + tileSize - 1) / tileSize;
         const int nYTiles = (sampleExtent.y + tileSize - 1) / tileSize;
 
+        const size_t image_seed = size_t(nXTiles * nYTiles) * size_t(sampler->samplesPerPixel) * this->seed;
+
         // Render and write the output image to disk
         if (scene.lights.size() > 0) {
             // Pre allocate estimators
@@ -204,7 +206,7 @@ namespace pbrt {
                 ParallelFor2D([&](const Point2i tile) {
                     // Render a single tile using BDPT
                     MemoryArena arena;
-                    int seed = tile.y * nXTiles + tile.x;
+                    int seed = tile.y * nXTiles + tile.x + image_seed;
                     std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
                     int x0 = sampleBounds.pMin.x + tile.x * tileSize;
                     int x1 = std::min(x0 + tileSize, sampleBounds.pMax.x);
@@ -529,10 +531,12 @@ namespace pbrt {
 
         bool conservative = params.FindOneBool("conservative", false);
 
+        std::string lightStrategy = params.FindOneString("lightsamplestrategy", "power");
 
-        std::string lightStrategy = params.FindOneString("lightsamplestrategy",
-            "power");
-        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy, conservative);
+        size_t seed = params.FindOneInt("seed", 0);
+
+
+        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy, conservative, seed);
     }
 
 }  // namespace pbrt
