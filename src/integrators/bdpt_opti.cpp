@@ -41,11 +41,16 @@
 #include "sampler.h"
 #include "stats.h"
 
+#define private public
+#define protected public
+#include "samplers/random.h"
+#undef protected
+#undef private
 
 // Uncorrelated BDPT
 // Draw a new camera and light sub path for every connection strategy
 // Very ineficient, for research purpose only
-//#define UBDPT
+// #define UBDPT
 
 namespace pbrt {
 
@@ -121,7 +126,7 @@ namespace pbrt {
             ri *= cameraVertices[i].pdfRev / cameraVertices[i].pdfFwd;
             Float actualRi = (s == 0 && i == t - 1) ?
                 ri * s1Pdf / cameraVertices[i].pdfRev : ri;
-            if (cameraVertices[i].delta | cameraVertices[i - 1].delta)
+            if (cameraVertices[i].delta || cameraVertices[i - 1].delta)
                 actualRi = 0;
             ratios[(s+t)-i] = actualRi;
             sumRi += actualRi;
@@ -135,7 +140,7 @@ namespace pbrt {
                 : lightVertices[0].IsDeltaLight();
             Float actualRi = (i == 1) ?
                 ri * s1Pdf / lightVertices[0].pdfFwd : ri;
-            if (lightVertices[i].delta | deltaLightvertex)
+            if (lightVertices[i].delta || deltaLightvertex)
                 actualRi = 0;
             sumRi += actualRi;
             ratios[i] = actualRi;
@@ -148,7 +153,6 @@ namespace pbrt {
 
         for (int i = 0; i < (s+t); ++i)
             weights[i] = ratios[i] / sumRi ;
-
     }
 
     // BDPT Method Definitions
@@ -229,6 +233,7 @@ namespace pbrt {
                             Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
                             Vertex* lightVertices = arena.Alloc<Vertex>(maxDepth + 1);
                             Float* balanceWeights = arena.Alloc<Float>(maxDepth + 2);
+                            std::fill(balanceWeights, balanceWeights + maxDepth + 2, Float(0));
 
                             // Get a distribution for sampling the light at the
                             // start of the light subpath. Because the light path
@@ -305,7 +310,6 @@ namespace pbrt {
                                                 scene, lightVertices, cameraVertices, s, t,
                                                 *lightDistr, lightToIndex, *camera, *tileSampler,
                                                 &pFilmNew, balanceWeights, sparseZero);
-
                                         if (!sparseZero)
                                         {
                                             // This is maybe not very clever, since the inverse is done in the addEstimate...

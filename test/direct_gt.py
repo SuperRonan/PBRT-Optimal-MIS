@@ -37,7 +37,7 @@ scenes = [
 	#['./scenes/cornell-triangle.pbrt', 'cornell-triangle'],
 	#['./scenes/cornell-large-light.pbrt', 'cornell-large'],
 	#['./scenes/cornell-small-light.pbrt', 'cornell-small'],
-	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/bidir.pbrt', 'veach-bidir'],
@@ -57,8 +57,9 @@ scenes = [
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
-	[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
@@ -83,7 +84,7 @@ min_max= [
 	#(2, 2),
 	#(2, 3),
 	#(2, 4),
-	(2, 5),
+	#(2, 5),
 	#(2, 6),
 	#(2, 7),
 	#(2, 8),
@@ -106,7 +107,7 @@ min_max= [
 	#(6, 6),
 	#(7, 7),
 	#(5, 10),
-	#(10, 10),
+	(10, 10),
 	#(22, 22)
 ]
 
@@ -133,7 +134,7 @@ numbers_of_samples = [
 	#131072,
 ]
 
-number_of_iterations = 16
+iterations_range = range(1179, 4096)
 
 samplers = [
 	'random',
@@ -184,7 +185,7 @@ def main(args):
 
 		for number_of_samples in numbers_of_samples:  
 			for scene_info in scenes:
-				sub_folder = scene_info[1] + "_s%d_L%d_l%d/" % (number_of_samples, max_len, min_len)
+				sub_folder = scene_info[1] + "_s%d_L%d_l%d/" % (number_of_samples, max_len, min_len) + 'gt/'
 
 				scene_path = scene_info[0]  
 				
@@ -203,7 +204,7 @@ def main(args):
 
 						img_name = filter_name(exec_filter, max_opti_depth, sampler)
 
-						for it in range(number_of_iterations):
+						for it in iterations_range:
 
 							pbrt_scene.integrator = integrator_str(exec_filter, min_depth, max_depth, max_opti_depth) + ('" integer seed" [ %d ]' % it)
 							pbrt_scene.sampler = sampler_str(sampler, number_of_samples)
@@ -235,7 +236,8 @@ def main(args):
 								print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 
 						gt = average(img_paths)
-						avg_path = result_folder + sub_folder + img_name + '_avg_' + str(number_of_iterations) + '.exr' 
+						
+						avg_path = result_folder + sub_folder + img_name + '_avg_' + str(iterations_range) + '.exr' 
 						saveExr(avg_path, gt)
 				
 				pbrt_scene.finish()

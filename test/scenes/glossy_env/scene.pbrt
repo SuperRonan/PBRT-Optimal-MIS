@@ -1,0 +1,202 @@
+Sampler "random" "integer pixelsamples" 2
+Integrator "obdpt" "integer maxdepth" [ 1 ] "integer mindepth" [ 0 ] "string heuristic" "balance" "bool conservative" "false"
+Film "image" "integer xresolution" 1200 "integer yresolution" 800
+	"string filename" "chopper-titan.exr"
+	#"float maxsampleluminance" 20
+Scale -1 1 1
+LookAt -3 1.5 -10   2 1 20  0 1 0
+Camera "perspective" "float fov" 60
+#Sampler "sobol" "integer pixelsamples" 8192
+WorldBegin
+AttributeBegin
+Rotate 10 0 1 0
+Rotate -88 1 0 0
+LightSource "infinite" "string mapname" "sky.exr"
+    "rgb L" [20 20 20]
+AttributeEnd
+# ground plane
+AttributeBegin
+Material "substrate" "rgb Kd" [.05 .05 .05]
+    "rgb Ks" [ .1 .1 .1 ]
+    "float uroughness" .01
+    "float vroughness" .01
+Translate 0 1.05 0
+Shape "trianglemesh" "point P" [ -50 0 -50   50 0 -50   50 0 50   -50 0 50 ]
+    "integer indices" [0 1 2 0 2 3]
+AttributeEnd
+# Converted from "steampunk bike3.obj" by obj2pbrt
+# Scene bounds: (-4.709720, 1.002029, -6.858441) - (0.520571, 2.774679, -4.640834)
+# lotsa chrome
+MakeNamedMaterial "Material"
+        "float roughness" .0000001
+        "string type" [ "metal" ] 
+        "spectrum k" "spds/Al.k.spd"
+        "spectrum eta" "spds/Al.eta.spd"
+# more chrome
+MakeNamedMaterial "Material.001" 
+        "float roughness" .0000000001
+        "string type" [ "metal" ] 
+        "spectrum k" "spds/Al.k.spd"
+        "spectrum eta" "spds/Al.eta.spd"
+# tires
+MakeNamedMaterial "Material.002" 
+        "float roughness" [ 0.0104080001 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.0288000003 0.0288000003 0.0288000003 ] 
+        "rgb Ks" [ 0.1 0.1 0.1 ] 
+# ~carbon fiber tire interiors
+MakeNamedMaterial "Material.003" 
+        "float roughness" [ 0.001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.071223 0.071223 0.071223 ] 
+        "rgb Ks" [ 0.1 0.1 0.1 ] 
+# plastic handgrips / seat
+MakeNamedMaterial "Material.004" 
+        "float roughness" [ 0.0104080001 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.0819759965 0.0819759965 0.0819759965 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.005" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.006" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.007" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.0133370003 0.0786570013 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.008" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.009" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.0463280007 0 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.010" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.011" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.202349007 0.202349007 0.202349007 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.012" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.242551997 0.242551997 0.242551997 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+# chrome around mirrors
+MakeNamedMaterial "Material.013" 
+        "float roughness" .0001
+        "string type" [ "metal" ] 
+        "spectrum k" "spds/Al.k.spd"
+        "spectrum eta" "spds/Al.eta.spd"
+# mirrors
+MakeNamedMaterial "Material.014" 
+        "string type" [ "mirror" ] 
+# part of headlamp
+MakeNamedMaterial "Material.015" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.261094004 0.261094004 0.261094004 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+# more headlamp
+MakeNamedMaterial "Material.016" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+# round chrome bit
+MakeNamedMaterial "Material.017" 
+        "float roughness" .0001
+        "string type" [ "metal" ] 
+        "spectrum k" "spds/Al.k.spd"
+        "spectrum eta" "spds/Al.eta.spd"
+MakeNamedMaterial "Material.018" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.254824996 0.254824996 0.254824996 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "Material.019" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.242551997 0.242551997 0.242551997 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+# rear tire bling
+MakeNamedMaterial "Material.020" 
+        "float roughness" [ 0.0104080001 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.639999986 0.639999986 0.639999986 ] 
+        "rgb Ks" [ 0.5 0.5 0.5 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+MakeNamedMaterial "None" 
+        "float roughness" [ 0 ] 
+        "float index" [ 1 ] 
+        "string type" [ "uber" ] 
+        "rgb Kd" [ 0.800000012 0.800000012 0.800000012 ] 
+        "rgb Ks" [ 0.800000012 0.800000012 0.800000012 ] 
+        "rgb Kt" [ 0 0 0 ] 
+        "rgb opacity" [ 1 1 1 ] 
+    Shape "plymesh" "string filename" "geometry/mesh_00004.ply" 
+
+AttributeBegin
+	NamedMaterial "Material.001" 
+	TransformBegin
+		Translate -4 1.5 -5
+		Shape "trianglemesh" "point P" [ -1 -1 0   -1 1 0   1 1 0   1 -1 0 ] "integer indices" [0 1 2 0 2 3]
+	TransformEnd
+AttributeEnd
+
+WorldEnd
