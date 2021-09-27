@@ -51,7 +51,10 @@ namespace pbrt
 				for (int j = 0; j < estimators.size(); ++j)
 				{
 					Estimator*& estimator = estimators[j];
-					estimator = MIS::createEstimator<Spectrum, Float>(heuristic, N); 
+					MIS::EstimatorCreateInfo<Float> eci;
+					eci.heuristic = heuristic;
+					eci.N = N;
+					estimator = MIS::createEstimator<Spectrum, Float>(eci); 
 					for (int i = 0; i < N; ++i)
 					{
 						estimator->setSampleForTechnique(i, techniques[i].n);

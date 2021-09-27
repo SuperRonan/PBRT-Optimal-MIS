@@ -201,7 +201,10 @@ namespace pbrt {
                 int N = depth + 2;
                 int width = sampleExtent.x;
                 int height = sampleExtent.y;
-                estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(heuristic, N, width, height));
+                MIS::EstimatorCreateInfo<Float> eci;
+                eci.heuristic = heuristic;
+                eci.N = N;
+                estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(width, height, eci));
                 estimators.back()->setSampleForTechnique(N - 1, width * height);
             }
             {
