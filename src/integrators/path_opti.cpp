@@ -253,6 +253,7 @@ namespace pbrt
 				Point2f xi = sampler.Get2D();
 				Float lambda = sampler.Get1D();
 				Sample sample;
+				LOG(INFO) << "Drawing a sample with technique " << i << " (" << typeid(technique).name() << ")\n";
 				technique.sample(it, lambda, xi, sample);
 				if (sample.pdf == 0)
 				{
@@ -267,6 +268,7 @@ namespace pbrt
 				Spectrum estimate = beta * sample.estimate / Float(ni);
 				if (sample.type == LightSamplingTechnique::Type::Gathering)
 				{
+					LOG(INFO) << "Visibility test\n";
 					// visibility test (for gathering techniques)
 					Spectrum visibility = sample.vis.Tr(scene, sampler);
 					sample.visibility_passed = !visibility.IsBlack();
@@ -280,6 +282,7 @@ namespace pbrt
 				// Effective PDFs actually
 				Float*& pdfs = wbuffer;
 				pdfs[i] = sum;
+				LOG(INFO) << "Computing PDFs\n";
 				for (int l = 0; l < N; ++l)
 				{
 					if (l != i)
@@ -297,11 +300,12 @@ namespace pbrt
 						}
 					}
 				}
+				LOG(INFO) << "Normalizing weights\n";
 				for (int l = 0; l < N; ++l)
 				{
 					wbuffer[l] = pdfs[l] / sum;
 				}
-
+				LOG(INFO) << "Adding estimate to estimator (" << typeid(estimator).name() << ") ...\n";
 				estimator.addEstimate(estimate, wbuffer, i);
 			}
 		}
