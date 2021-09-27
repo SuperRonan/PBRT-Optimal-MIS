@@ -368,7 +368,7 @@ namespace pbrt
 		}
 
 
-		const std::vector<std::string> available_strats = { "uniform", "power", "spatial" };
+		const std::vector<std::string> available_strats = { "uniform", "power", "spatial", "NSP", "NSS"};
 
 		int n_SS = params.FindOneInt("SS", 0);
 		if (n_SS)

@@ -17,8 +17,17 @@ namespace pbrt
 	{}
 
 	LightSelector::LightSelector(std::string const& strategy):
-		strategy(strategy)
-	{}
+		strategy(strategy),
+		is_ns(strategy == "NSP" || strategy == "NSS")
+	{
+		if (is_ns)
+		{
+			if (this->strategy == "NSS")
+				this->strategy = "spatial";
+			else if(this->strategy == "NSP")
+				this->strategy = "power";
+		}
+	}
 
 	void LightSelector::init(Scene const& scene)
 	{
@@ -38,7 +47,25 @@ namespace pbrt
 	void LightSelector::select(const SurfaceInteraction& ref, Float lambda, const Light*& light, Float& pmf)const
 	{
 		const Distribution1D* distrib = distribution->Lookup(ref.p);
-		int light_index = distrib->SampleDiscrete(lambda, &pmf);
+		int light_index = 0;
+		if (is_ns && distrib->Count() > 1)
+		{
+			static thread_local std::vector<Float> contrib;
+			contrib = std::vector<Float>(distrib->func);
+			int max_id = 0;
+			for (int i = 1; i < contrib.size(); ++i)
+			{
+				if (contrib[i] > contrib[max_id])
+					max_id = i;
+			}
+			contrib[max_id] = 0;
+			Distribution1D ns_distrib(contrib.data(), contrib.size());
+			light_index = ns_distrib.SampleDiscrete(lambda, &pmf);
+		}
+		else
+		{
+			light_index = distrib->SampleDiscrete(lambda, &pmf);
+		}
 		const std::shared_ptr<Light>& _light = lights[light_index];
 		light = _light.get();
 	}
@@ -46,9 +73,34 @@ namespace pbrt
 	Float LightSelector::pmf(const SurfaceInteraction& ref, const Light* light)const
 	{
 		const Distribution1D* distrib = distribution->Lookup(ref.p);
-		const auto f = light_to_index.find(light);
-		if (f == light_to_index.end())	return 0;
-		Float pmf = distrib->DiscretePDF(f->second);
+		Float pmf = 0;
+		if (is_ns & distrib->Count() > 1)
+		{
+			static thread_local std::vector<Float> contrib;
+			contrib = std::vector<Float>(distrib->func);
+			int max_id = 0;
+			for (int i = 1; i < contrib.size(); ++i)
+			{
+				if (contrib[i] > contrib[max_id])
+					max_id = i;
+			}
+			contrib[max_id] = 0;
+			Distribution1D ns_distrib(contrib.data(), contrib.size());
+			
+			const auto f = light_to_index.find(light);
+			if (f != light_to_index.end())
+			{
+				pmf = ns_distrib.DiscretePDF(f->second);
+			}
+		}
+		else
+		{
+			const auto f = light_to_index.find(light);
+			if (f != light_to_index.end())
+			{
+				pmf = distrib->DiscretePDF(f->second);
+			}
+		}
 		return pmf;
 	}
 

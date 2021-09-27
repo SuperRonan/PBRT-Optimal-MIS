@@ -35,6 +35,7 @@ scenes = [
 	#['./scenes/cornell-triangle.pbrt', 'cornell-triangle'],
 	#['./scenes/cornell-large-light.pbrt', 'cornell-large'],
 	#['./scenes/cornell-small-light.pbrt', 'cornell-small'],
+	#['./scenes/box-sphere-light.pbrt', 'box-sphere-light'],
 	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
@@ -55,11 +56,11 @@ scenes = [
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
-	[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
-	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
+	[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
 	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
@@ -71,17 +72,19 @@ scenes = [
 exec_filters = [
 	#('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
-	('bdpt', ''),
+	#('bdpt', ''),
 
-	('obdpt', 'balance'),
-	('obdpt', 'power'),	
-	('obdpt', 'cutoff'),	
-	('obdpt', 'maximum'),
+	#('obdpt', 'balance'),
+	#('obdpt', 'power'),	
+	#('obdpt', 'cutoff'),	
+	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	('obdpt', 'direct', 'conservative'),	
-	('obdpt', 'direct'),	
+	#('obdpt', 'direct', 'conservative'),	
+	#('obdpt', 'direct'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('SS', 1), ('PP', 1)]),
@@ -97,24 +100,37 @@ exec_filters = [
 	#('opath', 'direct', [('SS', 1), ("SP", 1), ("Li", 1)]),
 	#('opath', 'direct', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'balance', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
-	#('opath', 'direct', [('SP', 1), ('PP', 1), ('BSDF', 1)]),
+	#('opath', 'direct', [('ower-SP', 1), ('PP', 1), ('BSDF', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)], 'conservative'),
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)]),
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)], 'conservative'),
 	#('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
+	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'conservative'),
+	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'power', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'maximum', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'direct', [('Li', 1), ('SP', 1), ], 'conservative'),
+	#('opath', 'direct', [('Li', 1), ], 'conservative'),
+	#('opath', 'direct', [('SP', 1), ], 'conservative'),
+	#('opath', 'direct', [('spatial-Li', 1), ], 'conservative'),
+	#('opath', 'direct', [('NSS-Li', 1), ], 'conservative'),
+	#('opath', 'balance', [('uniform-Li', 1), ]),
+	#('opath', 'balance', [('spatial-Li', 1), ]),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	#(2, 3),
+	(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
-	(2, 7),
+	#(2, 7),
 	#(2, 8),
 	#(2, 9),
 	#(2, 10),
@@ -128,7 +144,7 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
-	#(2, 22, 4),
+	#(2, 22, 5),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),
@@ -146,7 +162,8 @@ numbers_of_samples = [
 	#3,
 	#4,
 	#8, 
-	16,
+	#16,
+	20,
 	#32, 
 	#64, 
 	#128, 
@@ -241,7 +258,7 @@ def main(args, i=None):
 						else:
 							print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 				
-				pbrt_scene.finish()
+				#pbrt_scene.finish()
 
 
 	for res in results:

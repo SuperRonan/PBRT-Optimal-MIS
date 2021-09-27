@@ -46,6 +46,7 @@ namespace pbrt
 		std::string strategy;
 		std::shared_ptr<LightDistribution> distribution;
 		std::unordered_map<const Light*, size_t> light_to_index;
+		bool is_ns;
 
 	public:
 		
