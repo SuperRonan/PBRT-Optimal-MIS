@@ -39,7 +39,7 @@ namespace pbrt
 
 	void PathOptiIntegrator::Preprocess(const Scene& scene, Sampler& sampler)
 	{
-		const int threads = NumSystemCores();
+		const int threads = MaxThreadIndex();
 		// numtechs
 		int N = techniques.size();
 		// Allocate all the estimators
