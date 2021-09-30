@@ -72,7 +72,6 @@ namespace pbrt
 
 	Float LightSelector::pmf(const SurfaceInteraction& ref, const Light* light)const
 	{
-		LOG(INFO) << "PMF (" << strategy << ")\n";
 		const Distribution1D* distrib = distribution->Lookup(ref.p);
 		Float pmf = 0;
 		if (is_ns & distrib->Count() > 1)
@@ -156,7 +155,6 @@ namespace pbrt
 
 	void LiTechnique::sample(const SurfaceInteraction& ref, Float lambda, Point2f const& xi, Sample& sample) const
 	{
-		LOG(INFO) << "Drawing a sample with Li technique\n";
 		Float light_pdf;
 		distribution->select(ref, lambda, sample.light, light_pdf);
 
@@ -172,7 +170,6 @@ namespace pbrt
 
 	Float LiTechnique::pdf(const SurfaceInteraction& ref, Sample const& sample) const
 	{
-		LOG(INFO) << "PDF with Li technique\n";
 		if (sample.light)
 		{
 			Float light_pdf = distribution->pmf(ref, sample.light);

@@ -46,7 +46,8 @@ scenes = [
 	#[pbrt_scenes_folder + 'breakfast/breakfast.pbrt', 'breakfast'],
 	#[pbrt_scenes_folder + 'pbrt-book/book.pbrt', 'pbrt-book'],
 	#[pbrt_scenes_folder + 'sssdragon/dragon_50.pbrt', 'sssdragon'],
-	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	#[pbrt_scenes_folder + 'staircase/scene_mirror.pbrt', 'staircase_mirror'],
 	#[pbrt_scenes_folder + 'villa/villa-daylight.pbrt', 'villa-daylight'],
 	#[pbrt_scenes_folder + 'villa/villa-lights-on.pbrt', 'villa-lights-on'],
 	#[pbrt_scenes_folder + 'white-room/whiteroom-daytime.pbrt', 'whiteroom-daytime'],
@@ -60,7 +61,8 @@ scenes = [
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
-	[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
+	#[pbrt_scenes_folder + 'living-room/scene.pbrt', 'living-room'],
+	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
 	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
@@ -70,17 +72,17 @@ scenes = [
 # Select your integrator
 # options: (name, heuristic, extra)
 exec_filters = [
-	#('path', ''),
+	('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	#('obdpt', 'balance'),
+	#('obdpt', 'balance',),
 	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct', 'conservative'),	
-	#('obdpt', 'direct'),	
+	#('obdpt', 'direct',),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -107,7 +109,7 @@ exec_filters = [
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)], 'conservative'),
 	#('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
-	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'conservative'),
 	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'power', [('spatial-Li', 1), ('uniform-Li', 1), ]),
@@ -120,14 +122,20 @@ exec_filters = [
 	#('opath', 'direct', [('NSS-Li', 1), ], 'conservative'),
 	#('opath', 'balance', [('uniform-Li', 1), ]),
 	#('opath', 'balance', [('spatial-Li', 1), ]),
+	#('opath', 'balance', [('BSDF', 1), ]),
+	#('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
+	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
+	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'conservative'),
+	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ]),
+	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ], 'conservative'),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
-	#(2, 4),
+	#(2, 3),
+	(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
@@ -163,10 +171,10 @@ numbers_of_samples = [
 	#4,
 	#8, 
 	#16,
-	20,
+	#20,
 	#32, 
 	#64, 
-	#128, 
+	128, 
 	#256, 
 	#512, 
 	#1024,
@@ -191,7 +199,6 @@ samplers = [
 	#'z-art',
 	#'morton',
 ]
-
 def main(args, i=None):
 
 	total = 0
@@ -258,7 +265,7 @@ def main(args, i=None):
 						else:
 							print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 				
-				#pbrt_scene.finish()
+				pbrt_scene.finish()
 
 
 	for res in results:
