@@ -59,13 +59,23 @@ def extract_light_strategy(options):
 		light_strategy = 'spatial'
 	return light_strategy
 
+def extract_estimation_strategy(options):
+	res = None
+	if 'strict' in options:
+		res = 'strict'
+	if 'loose' in options:
+		res = 'loose'
+	return res
+
 
 def sampler_str(s, n):
 	return 'Sampler "%s" "integer pixelsamples" %d' % (s, n)
 
-def integrator_string(integrator_name, min_depth, max_depth, heuristic, max_opti_depth, is_conservative, light_strategy=None):
-	conservative_str = 'true' if is_conservative else 'false'
-	res = 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s" "bool conservative" "%s"' % (integrator_name, max_depth, min_depth, heuristic, conservative_str)
+def integrator_string(integrator_name, min_depth, max_depth, heuristic, max_opti_depth, estimation_strategy=None, light_strategy=None):
+	res = 'Integrator "%s" "integer maxdepth" [ %d ] "integer mindepth" [ %d ] "string heuristic" "%s"' % (integrator_name, max_depth, min_depth, heuristic)
+	if estimation_strategy is not None:
+		strict_str = 'true' if estimation_strategy == 'strict' else 'false'
+		res += ' "bool strict" "%s"' % strict_str
 	if light_strategy is not None:
 		res += '"string lightsamplestrategy" "%s"' % light_strategy
 	if max_opti_depth is not None:
@@ -88,9 +98,9 @@ def techniques_name(techniques):
 	return res
 
 def integrator_str(options, min_depth, max_depth, max_opti_depth):
-	is_conservative = any([option == 'conservative' for option in options])
+	estimation_strat = extract_estimation_strategy(options)
 	light_strategy = extract_light_strategy(options)
-	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth, is_conservative, light_strategy)
+	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth, estimation_strat, light_strategy)
 	if options[0] == 'opath' and len(options) >= 3:
 		techniques = options[2]
 		res += techniques_string(techniques)
@@ -107,9 +117,9 @@ def filter_name(options, max_opti_depth, sampler):
 	light_strategy = extract_light_strategy(options)
 	if light_strategy is not None:
 		res += '_' + light_strategy
-	is_conservative = 'conservative' in options
-	if is_conservative:
-		res += '_conservative'
+	estimation_strat = extract_estimation_strategy(options)
+	if estimation_strat is not None:
+		res += '_' + estimation_strat
 	if sampler != 'random':
 		res += '_' + sampler
 	return res

@@ -3,6 +3,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
+# TODO this file is not up to date with the new estimation strategy name (conservative renamed to strict (vs loose))
+
 # Select your scene
 #path of the .pbrt file, name of the scene
 scenes = [

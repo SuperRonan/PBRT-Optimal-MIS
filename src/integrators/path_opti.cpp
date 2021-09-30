@@ -15,7 +15,7 @@ namespace pbrt
 		MIS::Heuristic h,
 		std::vector<Technique> const& techniques,
 		const std::string& lightSampleStrategy,
-		bool conservative) :
+		bool strict) :
 		maxDepth(maxDepth),
 		lightSampleStrategy(lightSampleStrategy),
 		heuristic(h),
@@ -23,7 +23,7 @@ namespace pbrt
 		sampler(sampler),
 		techniques(techniques),
 		pixelBounds(pixelBounds),
-		conservative(conservative)
+		strict(strict)
 	{}
 
 	PathOptiIntegrator::~PathOptiIntegrator()
@@ -77,7 +77,10 @@ namespace pbrt
 		}
 		std::cout << "Preprocessing..." << std::endl;
 		Preprocess(scene, *sampler);
-		std::cout << "Conservative: " << conservative << std::endl;
+		if (strict)
+			std::cout << "Strict estimation\n";
+		else
+			std::cout << "Loose estimation\n";
 
 		// Compute number of tiles, _nTiles_, to use for parallel rendering
 		Bounds2i sampleBounds = camera->film->GetSampleBounds();
@@ -218,7 +221,7 @@ namespace pbrt
 
 			// Draw the samples from multiple techniques to estimate direct lighting
 			// And feed the samples to the estimator
-			if (conservative)
+			if (strict)
 				directLighting<true>(isect, scene, beta, arena, sampler, estimator, wbuffer);
 			else
 				directLighting<false>(isect, scene, beta, arena, sampler, estimator, wbuffer);
@@ -239,7 +242,7 @@ namespace pbrt
 		return res;
 	}
 
-	template <bool CONSERVATIVE>
+	template <bool STRICT>
 	void PathOptiIntegrator::directLighting(SurfaceInteraction const& it, Scene const& scene, Spectrum const& beta, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const 
 	{
 		using Sample = LightSamplingTechnique::Sample;
@@ -261,8 +264,7 @@ namespace pbrt
 					// skip it (consider it as a singular zero
 					continue;
 				}
-				const bool is_conservative = CONSERVATIVE;
-				if constexpr (!is_conservative)
+				if constexpr (!STRICT)
 					if (sample.estimate.IsBlack())	continue; // skip the zero contribution sample
 
 				Spectrum estimate = beta * sample.estimate / Float(ni);
@@ -274,7 +276,7 @@ namespace pbrt
 					sample.visibility_passed = !visibility.IsBlack();
 					estimate *= visibility;
 					
-					if constexpr (!is_conservative)
+					if constexpr (!STRICT)
 						if (visibility.IsBlack())	continue; // skip the zero contribution sample 
 				}
 				// Use the weights buffer to tmporarily store the PDFs
@@ -469,8 +471,8 @@ namespace pbrt
 		}
 
 
-		bool conservative = params.FindOneBool("conservative", true);
+		bool strict = params.FindOneBool("strict", true);
 
-		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy, conservative); 
+		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy, strict); 
 	}
 }

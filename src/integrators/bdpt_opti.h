@@ -81,7 +81,7 @@ namespace pbrt {
             const Bounds2i& pixelBounds,
             MIS::Heuristic heuristic,
             const std::string& lightSampleStrategy = "power",
-            bool conservative=false, size_t seed=0)
+            bool strict=false, size_t seed=0)
             : sampler(sampler),
             camera(camera),
             minDepth(minDepth),
@@ -90,7 +90,7 @@ namespace pbrt {
             pixelBounds(pixelBounds),
             lightSampleStrategy(lightSampleStrategy),
             heuristic(heuristic),
-            conservative(conservative),
+            strict(strict),
             seed(seed)
         {}
         void Render(const Scene& scene);
@@ -104,12 +104,12 @@ namespace pbrt {
         const Bounds2i pixelBounds;
         const std::string lightSampleStrategy;
         const MIS::Heuristic heuristic;
-        const bool conservative;
+        const bool strict;
         const size_t seed;
     };
 
     // Returns the estimate (f(x) / p_s(x)) for technique (s, t) 
-    template <bool CONSERVATIVE=false>
+    template <bool STRICT=false>
     Spectrum ConnectOBDPT(
         const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
         int t, const Distribution1D& lightDistr,

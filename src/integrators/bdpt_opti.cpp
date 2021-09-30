@@ -166,7 +166,10 @@ namespace pbrt {
             CreateLightSampleDistribution(lightSampleStrategy, scene);
 
         std::cout << "Rendering with setting: \n";
-        std::cout << "Conservative: " << conservative << std::endl;
+        if (strict)
+            std::cout << "Strict estimation\n";
+        else
+            std::cout << "Loose estimation\n";
 #ifdef UBDPT
         std::cout << "Uncorellated: 1" << std::endl;
 #else   
@@ -303,7 +306,7 @@ namespace pbrt {
                                     else
                                     {
                                         bool sparseZero = true;
-                                        if(conservative)
+                                        if(strict)
                                             estimate = ConnectOBDPT<true>(
                                                 scene, lightVertices, cameraVertices, s, t,
                                                 *lightDistr, lightToIndex, *camera, *tileSampler,
@@ -368,7 +371,7 @@ namespace pbrt {
     }
 
     // This function also needs to prove that the sample is not sparse zero
-    template <bool CONSERVATIVE>
+    template <bool STRICT>
     Spectrum ConnectOBDPT(
         const Scene& scene, Vertex* lightVertices, Vertex* cameraVertices, int s,
         int t, const Distribution1D& lightDistr,
@@ -416,8 +419,8 @@ namespace pbrt {
                     if (qs.IsOnSurface()) L *= AbsDot(wi, qs.ns());
                     DCHECK(!L.HasNaNs());
                     // Only check visibility after we know that the path would
-                    // make a non-zero contribution. (for non conservative estimation)
-                    bool check_vis = CONSERVATIVE || !L.IsBlack();
+                    // make a non-zero contribution. (for loose (non strict) estimation)
+                    bool check_vis = STRICT || !L.IsBlack();
                     if (check_vis)
                     {
                         Spectrum V = vis.Tr(scene, sampler);
@@ -450,8 +453,8 @@ namespace pbrt {
                     s1Pdf = pdfArea * lightPdf;
                     L = pt.beta * pt.f(sampled, TransportMode::Radiance) * sampled.beta;
                     if (pt.IsOnSurface()) L *= AbsDot(wi, pt.ns());
-                    // Only check visibility if the path would carry radiance. (for conservative estimation)
-                    bool check_vis = CONSERVATIVE || !L.IsBlack();
+                    // Only check visibility if the path would carry radiance. (for strict estimation)
+                    bool check_vis = STRICT || !L.IsBlack();
                     if (check_vis)
                     {
                         Spectrum V = vis.Tr(scene, sampler);
@@ -470,7 +473,7 @@ namespace pbrt {
                     " qs: " << qs << ", pt: " << pt << ", qs.f(pt): " << qs.f(pt, TransportMode::Importance) <<
                     ", pt.f(qs): " << pt.f(qs, TransportMode::Radiance) << ", G: " << G(scene, sampler, qs, pt) <<
                     ", dist^2: " << DistanceSquared(qs.p(), pt.p());
-                bool check_vis = CONSERVATIVE || !L.IsBlack();
+                bool check_vis = STRICT || !L.IsBlack();
                 if (check_vis)
                 {
                     Spectrum geometry = G(scene, sampler, qs, pt);
@@ -536,14 +539,14 @@ namespace pbrt {
         else
             Error(std::string(std::string("Heuristic ") + h_name + " is not recognized!").c_str());
 
-        bool conservative = params.FindOneBool("conservative", false);
+        bool strict = params.FindOneBool("strict", false);
 
         std::string lightStrategy = params.FindOneString("lightsamplestrategy", "power");
 
         size_t seed = params.FindOneInt("seed", 0);
 
 
-        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy, conservative, seed);
+        return new OBDPTIntegrator(sampler, camera, minDepth, maxDepth, maxOptiDepth, pixelBounds, h, lightStrategy, strict, seed);
     }
 
 }  // namespace pbrt

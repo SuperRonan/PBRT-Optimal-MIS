@@ -58,7 +58,7 @@ namespace pbrt
 		std::shared_ptr<Sampler> sampler;
 		const Bounds2i pixelBounds;
 		
-		bool conservative;
+		bool strict;
 
 	public:
 
@@ -68,13 +68,13 @@ namespace pbrt
 			MIS::Heuristic h,
 			std::vector<Technique> const& techniques,
 			const std::string& lightSampleStrategy = "spatial",
-			bool conservative=true);
+			bool strict=true);
 
 		virtual ~PathOptiIntegrator();
 
 		void Preprocess(const Scene& scene, Sampler& sampler);
 
-		template <bool CONSERVATIVE = false>
+		template <bool STRICT = false>
 		void directLighting(SurfaceInteraction const& isect, Scene const& scene, Spectrum const& beta, MemoryArena& arena, Sampler& sampler, Estimator& estimator, Float* wbuffer) const;
 
 		// Returns the contribution of not computed with MIS, i.e. directly visibible lights (depth = 0)
