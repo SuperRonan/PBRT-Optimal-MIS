@@ -25,7 +25,7 @@ scenes = [
 	#['./scenes/box-caustic-empty.pbrt', 'box-caustic-empty'], # an open cornel box with a glass sphere
 	#['./scenes/empty-box.pbrt', 'empty-box'],# an empty cornell box with the full ceiling as a light
 	#['./scenes/test-mat/test-mat.pbrt', 'test-mat'],
-	['./scenes/veach-mis.pbrt', 'veach-mis'],
+	#['./scenes/veach-mis.pbrt', 'veach-mis'],
 	#['./scenes/veach-mis-phong.pbrt', 'veach-mis-phong'],
 	#['./scenes/box-three-lights.pbrt', 'box-three-lights'],
 	#['./scenes/cornell-window.pbrt', 'cornell-window'],
@@ -62,7 +62,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + 'living-room/scene.pbrt', 'living-room'],
-	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
+	[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
 	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
@@ -87,9 +87,9 @@ exec_filters = [
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
-	('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
-	('opath', 'direct', [('BSDF', 1), ("Li", 1)], 'loose'),
-	('opath', 'direct', [('BSDF', 1), ("Li", 1)], 'strict'),
+	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
+	#('opath', 'direct', [('BSDF', 1), ("Li", 1)], 'loose'),
+	#('opath', 'direct', [('BSDF', 1), ("Li", 1)], 'strict'),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'direct', [('SS', 1), ('PP', 1)]),
@@ -112,8 +112,8 @@ exec_filters = [
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)], 'strict'),
 	#('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
-	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ]),
-	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
+	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
+	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
 	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'power', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
@@ -137,8 +137,8 @@ exec_filters = [
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	#(2, 3),
-	(2, 4),
+	(2, 3),
+	#(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
