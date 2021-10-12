@@ -103,10 +103,11 @@ namespace pbrt
 	protected:
 
 		GuidingDistribution::SamplingProjection projection_type;
+		bool backup;
 
 	public:
 
-		GuidingTechnique(GuidingDistribution::SamplingProjection type, std::string const& strategy);
+		GuidingTechnique(GuidingDistribution::SamplingProjection type, std::string const& strategy, bool backup=false);
 
 		virtual void init(Scene const& scene) override;
 

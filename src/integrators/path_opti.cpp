@@ -161,6 +161,19 @@ namespace pbrt
 					arena.Reset();
 				} while (tileSampler->StartNextSample());
 				L /= Float(sampler->samplesPerPixel);
+
+				//{
+				//	using Linear_System = MIS::LinearSystem<Float>;
+				//	const auto printSystem = [&](Linear_System const& system)
+				//	{
+				//		std::cout << "Matrix: \n" << system.tech_matrix << "\n";
+				//		std::cout << "Vectors: \n" << system.contrib_vectors << "\n";
+				//		std::cout << "Alphas: \n" << system.alphas << "\n";
+				//	};
+				//	using Direct_Estimator = MIS::DirectEstimator<Spectrum, Float>;
+				//	Direct_Estimator* d = dynamic_cast<Direct_Estimator*>(estimators[0]);	
+				//}
+
 				// Get the estimators estimations
 				for (EstimatorPtr& estimator : estimators)
 					L += estimator->solve(sampler->samplesPerPixel);
@@ -376,100 +389,54 @@ namespace pbrt
 			techs.push_back(bsdfTech);
 		}
 
+		const std::map<std::string, std::string> available_strats { 
+			{"uniform-", "uniform"},
+			{"power-", "power"}, 
+			{"spatial-", "spatial"}, 
+			{"NSP-", "NSP"}, 
+			{"NSS-", "NSS"}, 
+			{"", lightStrategy}, 
+		};
 
-		const std::vector<std::string> available_strats = { "uniform", "power", "spatial", "NSP", "NSS"};
-
-		int n_SS = params.FindOneInt("SS", 0);
-		if (n_SS)
+		const auto addGTech = [&](int n, GuidingDistribution::SamplingProjection proj, std::string const& light_strat, bool backup)
 		{
-			PathOptiIntegrator::Technique ssTech;
-			ssTech.n = n_SS;
-			ssTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple, lightStrategy);
-			techs.push_back(ssTech);
-		}
+			PathOptiIntegrator::Technique tech;
+			tech.n = n;
+			tech.technique = std::make_shared<GuidingTechnique>(proj, light_strat, backup);
+			techs.push_back(tech);
+		};
 
-		for (std::string const& strat : available_strats)
+		const std::map<std::string, GuidingDistribution::SamplingProjection> guiding_projs { 
+			{"SS", GuidingDistribution::SamplingProjection::SphereSimple},
+			{"SP", GuidingDistribution::SamplingProjection::SpherePrecise},
+			{"PP", GuidingDistribution::SamplingProjection::ParallelPlane},
+		};
+
+		for (const auto& light_strat : available_strats)
 		{
-			std::string tech_str = strat + "-SS";
-			int n = params.FindOneInt(tech_str, 0);
-			if (n)
+			for (const auto& proj : guiding_projs)
 			{
-				PathOptiIntegrator::Technique strat_ss;
-				strat_ss.n = n;
-				strat_ss.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SphereSimple, strat);
-				techs.push_back(strat_ss);
+				const std::string tech_str = light_strat.first + proj.first;
+				const int n_g = params.FindOneInt(tech_str, 0);
+				if (n_g > 0)
+					addGTech(n_g, proj.second, light_strat.second, false);
+
+				const std::string tech_str_backup = tech_str + "-Li";
+				const int n_g_backup = params.FindOneInt(tech_str_backup, 0);
+				if (n_g_backup > 0)
+					addGTech(n_g_backup, proj.second, light_strat.second, true);
 			}
-		}
 
-
-		int n_SP = params.FindOneInt("SP", 0);
-		if (n_SP)
-		{
-			PathOptiIntegrator::Technique spTech;
-			spTech.n = n_SP;
-			spTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise, lightStrategy);
-			techs.push_back(spTech);
-		}
-
-		for (std::string const& strat : available_strats)
-		{
-			std::string tech_str = strat + "-SP";
-			int n = params.FindOneInt(tech_str, 0);
-			if (n)
-			{
-				PathOptiIntegrator::Technique strat_sp;
-				strat_sp.n = n;
-				strat_sp.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::SpherePrecise, strat);
-				techs.push_back(strat_sp);
-			}
-		}
-
-
-		int n_PP = params.FindOneInt("PP", 0);
-		if (n_PP)
-		{
-			PathOptiIntegrator::Technique ppTech;
-			ppTech.n = n_PP;
-			ppTech.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane, lightStrategy);
-			techs.push_back(ppTech);
-		}
-
-		for (std::string const& strat : available_strats)
-		{
-			std::string tech_str = strat + "-PP";
-			int n = params.FindOneInt(tech_str, 0);
-			if (n)
-			{
-				PathOptiIntegrator::Technique strat_pp;
-				strat_pp.n = n;
-				strat_pp.technique = std::make_shared<GuidingTechnique>(GuidingDistribution::SamplingProjection::ParallelPlane, strat);
-				techs.push_back(strat_pp);
-			}
-		}
-
-
-		int n_Li = params.FindOneInt("Li", 0);
-		if (n_Li)
-		{
-			PathOptiIntegrator::Technique liTech;
-			liTech.n = n_Li;
-			liTech.technique = std::make_shared<LiTechnique>(lightStrategy);
-			techs.push_back(liTech);
-		}
-
-		for (std::string const& strat : available_strats)
-		{
-			std::string tech_str = strat + "-Li";
-			int n = params.FindOneInt(tech_str, 0);
-			if (n)
+			const std::string Li_str = light_strat.first + "Li";
+			const int n_Li = params.FindOneInt(Li_str, 0);
+			if(n_Li)
 			{
 				PathOptiIntegrator::Technique strat_li;
-				strat_li.n = n;
-				strat_li.technique = std::make_shared<LiTechnique>(strat);
+				strat_li.n = n_Li;
+				strat_li.technique = std::make_shared<LiTechnique>(light_strat.second);
 				techs.push_back(strat_li);
 			}
 		}
-
 
 		bool strict = params.FindOneBool("strict", true);
 

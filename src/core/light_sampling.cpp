@@ -182,9 +182,10 @@ namespace pbrt
 	}
 
 
-	GuidingTechnique::GuidingTechnique(GuidingDistribution::SamplingProjection type, std::string const& strategy) :
+	GuidingTechnique::GuidingTechnique(GuidingDistribution::SamplingProjection type, std::string const& strategy, bool backup) :
 		GatheringTechnique(strategy),
-		projection_type(type)
+		projection_type(type),
+		backup(backup)
 	{}
 
 	void GuidingTechnique::init(Scene const& scene)
@@ -249,6 +250,17 @@ namespace pbrt
 				}
 			}
 		}
+		else if (backup)
+		{
+			sample.estimate = sample.light->Sample_Li(ref, xi, &sample.wi, &sample.pdf, &sample.vis);
+			sample.pdf *= select_light_pmf;
+			if (!sample.estimate.IsBlack() && sample.pdf != 0)
+			{
+				sample.estimate *= ref.bsdf->f(ref.wo, sample.wi, BxDFType::BSDF_ALL) * AbsDot(sample.wi, ref.shading.n) / sample.pdf;
+			}
+			sample.type = this->type;
+			sample.delta = false;
+		}
 		else
 		{
 			// Skip this sample, say that it failed
@@ -264,9 +276,15 @@ namespace pbrt
 		if (select_light_pmf == 0)	return 0;
 
 		GuidingDistribution gdstrb = GuidingDistribution(ref, *sample.light);
-		if (!gdstrb.CanSample(projection_type))	return 0;
-
-		Float pdf = gdstrb.Pdf(sample.wi, projection_type);
+		Float pdf = 0;
+		if (gdstrb.CanSample(projection_type))
+		{
+			pdf = gdstrb.Pdf(sample.wi, projection_type);
+		}
+		else if (backup)
+		{
+			pdf = sample.light->Pdf_Li(ref, sample.wi);
+		}
 		return pdf * select_light_pmf;
 	}
 

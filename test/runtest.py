@@ -62,9 +62,9 @@ scenes = [
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
 	#[pbrt_scenes_folder + 'living-room/scene.pbrt', 'living-room'],
-	[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
+	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 	#['./scenes/glossy_env/scene.pbrt', 'glossy_env'],
 ]
@@ -112,13 +112,22 @@ exec_filters = [
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)], 'strict'),
 	#('opath', 'balance', [('SP', 1), ('PP', 1)]),
 	#('opath', 'balance', [('SS', 1), ("SP", 1), ("Li", 1)]),
-	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
-	('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
+	#('opath', 'balance', [('spatial-SS', 1), ('spatial-Li', 1), ('uniform-Li', 1),  ], 'loose'),
+	#('opath', 'direct', [('spatial-SS', 1), ('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('spatial-SS', 1), ('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
+	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('uniform-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('spatial-Li', 1), ], 'strict'),
 	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'power', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'maximum', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'direct', [('Li', 1), ('SP', 1), ], 'strict'),
+	('opath', 'direct', [('Li', 1), ('PP-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('PP-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('PP', 1), ], 'strict'),
 	#('opath', 'direct', [('Li', 1), ], 'strict'),
 	#('opath', 'direct', [('SP', 1), ], 'strict'),
 	#('opath', 'direct', [('spatial-Li', 1), ], 'strict'),
@@ -129,7 +138,7 @@ exec_filters = [
 	#('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
-	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ]),
+	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ('spatial-Li', 1) ]),
 	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ], 'strict'),
 ]
 
@@ -174,7 +183,7 @@ numbers_of_samples = [
 	#4,
 	#8, 
 	16,
-	#20,
+	#23,
 	#32, 
 	#64, 
 	#128, 
@@ -268,7 +277,7 @@ def main(args, i=None):
 						else:
 							print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 				
-				pbrt_scene.finish()
+				#pbrt_scene.finish()
 
 
 	for res in results:
