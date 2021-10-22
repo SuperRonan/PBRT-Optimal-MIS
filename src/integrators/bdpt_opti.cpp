@@ -64,7 +64,7 @@ namespace pbrt {
         Vertex* cameraVertices, Vertex& sampled, const int s, const int t,
         const Distribution1D& lightPdf,
         const std::unordered_map<const Light*, size_t>& lightToIndex, Float s1Pdf, 
-        Float * weights, bool & sparseZero) {
+        Float * weights, SampleProperty & sampleProp) {
         DCHECK_NE(s + t, 2);
         Float sumRi = 0;
         Float * const& ratios = weights;
@@ -98,7 +98,7 @@ namespace pbrt {
             if (pdf == 0 && s == 0)
             {
                 // pt is on the env map, but the env map is dark, so not really a light source
-                sparseZero = true;
+                sampleProp = SampleProperty::SINGULAR_ZERO;
                 return;
             }
             a4 = { &pt->pdfRev, pdf};
@@ -145,14 +145,21 @@ namespace pbrt {
             sumRi += actualRi;
             ratios[i] = actualRi;
         }
-        Float actualRi = (s == 1) ? s1Pdf / lightVertices[0].pdfFwd : 1.0;
-        ratios[s] = actualRi;
-        sumRi += actualRi;
+        if (sumRi == 0 && false)
+        {
+            sampleProp = SampleProperty::ONE_TECH;
+        }
+        else
+        {
+            Float actualRi = (s == 1) ? s1Pdf / lightVertices[0].pdfFwd : 1.0;
+            ratios[s] = actualRi;
+            sumRi += actualRi;
 
-        DCHECK_GT(sumRi, 0);
+            DCHECK_GT(sumRi, 0);
 
-        for (int i = 0; i < (s+t); ++i)
-            weights[i] = ratios[i] / sumRi ;
+            for (int i = 0; i < (s + t); ++i)
+                weights[i] = ratios[i] / sumRi;
+        }
     }
 
     // BDPT Method Definitions
@@ -227,6 +234,7 @@ namespace pbrt {
 
                     std::unique_ptr<FilmTile> filmTile =
                         camera->film->GetFilmTile(tileBounds);
+
                     for (Point2i pPixel : tileBounds) {
                         tileSampler->StartPixel(pPixel);
                         if (!InsideExclusive(pPixel, pixelBounds))
@@ -288,7 +296,10 @@ namespace pbrt {
                                     if (nLight_generated != s)  continue;
 #endif
 
-                                    Point2f pFilmNew = pFilm;
+
+                                    //Point2f pFilmNew = pFilm
+                                    // Avoid having samples fall in nearby pixels
+                                    Point2f pFilmNew = (Point2f)pPixel + Point2f(0.5, 0.5);
                                     if (fallBackBalance)
                                     {
                                         estimate = ConnectBDPT(scene, lightVertices, cameraVertices, s, t,
@@ -305,25 +316,37 @@ namespace pbrt {
                                     }
                                     else
                                     {
-                                        bool sparseZero = true;
+                                        SampleProperty sampleProp = SampleProperty::SINGULAR_ZERO;
+                                        // We have to prove that the sample is not singular
                                         if(strict)
                                             estimate = ConnectOBDPT<true>(
                                                 scene, lightVertices, cameraVertices, s, t,
                                                 *lightDistr, lightToIndex, *camera, *tileSampler,
-                                                &pFilmNew, balanceWeights, sparseZero);
+                                                &pFilmNew, balanceWeights, sampleProp);
                                         else
                                             estimate = ConnectOBDPT<false>(
                                                 scene, lightVertices, cameraVertices, s, t,
                                                 *lightDistr, lightToIndex, *camera, *tileSampler,
-                                                &pFilmNew, balanceWeights, sparseZero);
-                                        if (!sparseZero)
+                                                &pFilmNew, balanceWeights, sampleProp);
+                                        if (sampleProp != SampleProperty::SINGULAR_ZERO)
                                         {
                                             // This is maybe not very clever, since the inverse is done in the addEstimate...
                                             Float u = pFilmNew.x / sampleExtent.x;
                                             Float v = pFilmNew.y / sampleExtent.y;
                                             int index = depth - std::max(minDepth, 1);
                                             auto* estimator = estimators[index];
-                                            estimator->addEstimate(estimate, balanceWeights, s, u, v);
+                                            //if (estimate.HasInf() || estimate.HasNaNs())
+                                            //{
+                                            //    int _ = 0;
+                                            //}
+                                            //if (std::any_of(balanceWeights, balanceWeights + s + t, [](Float f) {return std::isinf(f) || std::isnan(f); }))
+                                            //{
+                                            //    int _ = 0; 
+                                            //}
+                                            if (sampleProp == SampleProperty::ONE_TECH)
+                                                estimator->addOneTechniqueEstimate(estimate, s, u, v);
+                                            else
+                                                estimator->addEstimate(estimate, balanceWeights, s, u, v);
                                         }
                                     }
                                 } // for s
@@ -342,6 +365,28 @@ namespace pbrt {
             }
             if(!estimators.empty())
             {
+                //{
+                //    using IDE = MIS::ImageDirectEstimator<Spectrum, Float, int64_t, true>;
+                //    IDE * ide = dynamic_cast<IDE*>(estimators[0]);
+                //    if (ide)
+                //    {
+                //        using Linear_System = MIS::LinearSystem<Float>;
+                //        const auto printSystem = [&](Linear_System const& system)
+                //        {
+                //        	std::cout << "Matrix: \n" << system.tech_matrix << "\n";
+                //        	std::cout << "Vectors: \n" << system.contrib_vectors << "\n";
+                //        	std::cout << "Alphas: \n" << system.alphas << "\n";
+                //        };
+
+                //        Linear_System sane = ide->getPixelLinearSystem(sampler->samplesPerPixel, 577, 693);
+                //        Linear_System insane = ide->getPixelLinearSystem(sampler->samplesPerPixel, 578, 693);
+                //        std::cout << "Sane: \n";
+                //        printSystem(sane);
+                //        std::cout << "Insane: \n";
+                //        printSystem(insane);
+                //    }
+                //}
+
                 // Make sure that OpenMP is enabled to launch the solving in parallel
                 // It should be enabled in the cmakefiles 
                 MIS::Parallel::init();
@@ -377,7 +422,7 @@ namespace pbrt {
         int t, const Distribution1D& lightDistr,
         const std::unordered_map<const Light*, size_t>& lightToIndex,
         const Camera& camera, Sampler& sampler, Point2f* pRaster,
-        Float* balance_weights, bool& sparseZero) 
+        Float* balance_weights, SampleProperty& sampleProp) 
     {
         ProfilePhase _(Prof::BDPTConnectSubpaths);
         Spectrum L(0.f);
@@ -396,7 +441,7 @@ namespace pbrt {
             if (pt.IsLight()) {
                 L = pt.Le(scene, cameraVertices[t - 2]) * pt.beta;
                 s1Pdf = cameraVertices[t - 1].PdfResampledLight(scene, cameraVertices[t - 2], lightDistr, lightToIndex);
-                sparseZero = false;
+                sampleProp = SampleProperty::NONE;
             }
             else
                 return 0;
@@ -425,7 +470,7 @@ namespace pbrt {
                     {
                         Spectrum V = vis.Tr(scene, sampler);
                         L *= V;
-                        sparseZero = V.IsBlack();
+                        if (!V.IsBlack()) sampleProp = SampleProperty::NONE;
                     }
                 }
             }
@@ -453,13 +498,17 @@ namespace pbrt {
                     s1Pdf = pdfArea * lightPdf;
                     L = pt.beta * pt.f(sampled, TransportMode::Radiance) * sampled.beta;
                     if (pt.IsOnSurface()) L *= AbsDot(wi, pt.ns());
+                    SampleProperty target_prop = SampleProperty::NONE;
+                    if (sampled.pdfFwd <= 0) // This is probably 99% true (tech (s=0) could probably still produce the sample, but this is an edge case anyway).  
+                        target_prop = SampleProperty::ONE_TECH;
+                    
                     // Only check visibility if the path would carry radiance. (for strict estimation)
                     bool check_vis = STRICT || !L.IsBlack();
                     if (check_vis)
                     {
                         Spectrum V = vis.Tr(scene, sampler);
                         L *= V;
-                        sparseZero = V.IsBlack();
+                        if (!V.IsBlack()) sampleProp = target_prop;
                     }
                 }
             }
@@ -478,24 +527,28 @@ namespace pbrt {
                 {
                     Spectrum geometry = G(scene, sampler, qs, pt);
                     L *= geometry;
-                    sparseZero = geometry.IsBlack();
+                    if (!geometry.IsBlack()) sampleProp = SampleProperty::NONE;
                 }
             }
         }
-        if (s >= 2)
-            s1Pdf = lightVertices[0].PdfResampledLight(scene, lightVertices[1], lightDistr, lightToIndex);
 
         ++totalPaths;
         if (L.IsBlack()) ++zeroRadiancePaths;
         ReportValue(pathLength, s + t - 2);
 
-
-        if (!sparseZero)
+        if (sampleProp == SampleProperty::NONE)
         {
+            if (s >= 2)
+                s1Pdf = lightVertices[0].PdfResampledLight(scene, lightVertices[1], lightDistr, lightToIndex);
+            
             BalanceWeights(scene, lightVertices, cameraVertices,
-                sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights, sparseZero);
+                sampled, s, t, lightDistr, lightToIndex, s1Pdf, balance_weights, sampleProp);
+            //if (std::any_of(balance_weights, balance_weights + s + t, [](Float f) {return std::isnan(f) || std::isinf(f); }))
+            //{
+            //    int _ = 0;
+            //}
         }
-        if (sparseZero) L = 0;
+        if (sampleProp == SampleProperty::SINGULAR_ZERO) L = 0;
         return L;
     }
 

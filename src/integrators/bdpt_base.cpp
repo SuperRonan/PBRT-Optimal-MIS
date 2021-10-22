@@ -68,6 +68,13 @@ namespace pbrt
         Float pdfPos, pdfDir;
         path[0] = Vertex::CreateCamera(&camera, ray, beta);
         camera.Pdf_We(ray, &pdfPos, &pdfDir);
+        path[0].pdfFwd = pdfPos;
+        // With float, it might be zero.
+        // I did not observe this problem with double.
+        if (pdfPos == 0)
+            return 0;
+        if (pdfDir == 0)
+            return 1;
         VLOG(2) << "Starting camera subpath. Ray: " << ray << ", beta " << beta
             << ", pdfPos " << pdfPos << ", pdfDir " << pdfDir;
         return RandomWalk(scene, ray, sampler, arena, beta, pdfDir, maxDepth - 1,

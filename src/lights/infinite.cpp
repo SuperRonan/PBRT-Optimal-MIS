@@ -125,7 +125,8 @@ Float InfiniteAreaLight::Pdf_Li(const Interaction &, const Vector3f &w) const {
     ProfilePhase _(Prof::LightPdf);
     Vector3f wi = WorldToLight(w);
     Float theta = SphericalTheta(wi), phi = SphericalPhi(wi);
-    Float sinTheta = std::sin(theta);
+    // With Float == float: theta can be a little bit above pi, an sinTheta negative
+    Float sinTheta = std::abs(std::sin(theta));
     if (sinTheta == 0) return 0;
     return distribution->Pdf(Point2f(phi * Inv2Pi, theta * InvPi)) /
            (2 * Pi * Pi * sinTheta);

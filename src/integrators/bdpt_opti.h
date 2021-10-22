@@ -71,6 +71,7 @@ namespace pbrt {
 
     struct Vertex;
 
+    enum class SampleProperty { NONE, SINGULAR_ZERO, ONE_TECH };
 
     // BDPT Declarations
     class OBDPTIntegrator : public Integrator {
@@ -115,7 +116,7 @@ namespace pbrt {
         int t, const Distribution1D& lightDistr,
         const std::unordered_map<const Light*, size_t>& lightToIndex,
         const Camera& camera, Sampler& sampler, Point2f* pRaster,
-        Float* balanceWeights, bool & sparseZero);
+        Float* balanceWeights, SampleProperty & sampleProp);
 
     OBDPTIntegrator* CreateOBDPTIntegrator(const ParamSet& params,
         std::shared_ptr<Sampler> sampler,

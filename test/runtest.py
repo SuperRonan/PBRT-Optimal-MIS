@@ -36,7 +36,7 @@ scenes = [
 	#['./scenes/cornell-large-light.pbrt', 'cornell-large'],
 	#['./scenes/cornell-small-light.pbrt', 'cornell-small'],
 	#['./scenes/box-sphere-light.pbrt', 'box-sphere-light'],
-	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/bidir.pbrt', 'veach-bidir'],
@@ -55,6 +55,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'bunny-fur/f3-15.pbrt', 'bunny'],
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
+	#[pbrt_scenes_folder + 'staircase/scene - Copy.pbrt', 'staircase - Copy'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
@@ -64,7 +65,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'living-room/scene.pbrt', 'living-room'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 	#['./scenes/glossy_env/scene.pbrt', 'glossy_env'],
 ]
@@ -76,14 +77,16 @@ exec_filters = [
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	#('obdpt', 'balance',),
+	('obdpt', 'balance',),
+	#('obdpt', 'balance', 'spatial'),
 	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct', 'strict'),	
 	#('obdpt', 'direct', 'loose'),	
-	#('obdpt', 'direct'),	
+	('obdpt', 'direct'),	
+	#('obdpt', 'direct', 'spatial'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
 	#('opath', 'power', [('BSDF', 1), ("Li", 1)]),
@@ -125,7 +128,7 @@ exec_filters = [
 	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'maximum', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'direct', [('Li', 1), ('SP', 1), ], 'strict'),
-	('opath', 'direct', [('Li', 1), ('PP-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('SP', 1), ('PP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('PP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('PP', 1), ], 'strict'),
 	#('opath', 'direct', [('Li', 1), ], 'strict'),
@@ -211,6 +214,9 @@ samplers = [
 	#'z-art',
 	#'morton',
 ]
+
+postfix = '_f64'
+
 def main(args, i=None):
 
 	total = 0
@@ -248,7 +254,7 @@ def main(args, i=None):
 						
 						pbrt_scene.makeTmp()
 
-						name = filter_name(exec_filter, max_opti_depth, sampler)
+						name = filter_name(exec_filter, max_opti_depth, sampler) + postfix
 						imgname = name + '.exr'
 						filenames.append(imgname)
 
@@ -277,7 +283,7 @@ def main(args, i=None):
 						else:
 							print(('\n%s' + Fore.YELLOW + ' returned %i' + Style.RESET_ALL) % (str(command), res))
 				
-				#pbrt_scene.finish()
+				pbrt_scene.finish()
 
 
 	for res in results:
