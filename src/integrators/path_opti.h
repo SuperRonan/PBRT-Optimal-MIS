@@ -58,7 +58,9 @@ namespace pbrt
 		std::shared_ptr<Sampler> sampler;
 		const Bounds2i pixelBounds;
 		
-		bool strict;
+		const bool strict;
+
+		const size_t _seed;
 
 	public:
 
@@ -68,7 +70,8 @@ namespace pbrt
 			MIS::Heuristic h,
 			std::vector<Technique> const& techniques,
 			const std::string& lightSampleStrategy = "spatial",
-			bool strict=true);
+			bool strict=true,
+			size_t seed=0);
 
 		virtual ~PathOptiIntegrator();
 

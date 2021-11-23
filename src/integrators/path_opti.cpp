@@ -15,7 +15,8 @@ namespace pbrt
 		MIS::Heuristic h,
 		std::vector<Technique> const& techniques,
 		const std::string& lightSampleStrategy,
-		bool strict) :
+		bool strict,
+		size_t seed) :
 		maxDepth(maxDepth),
 		lightSampleStrategy(lightSampleStrategy),
 		heuristic(h),
@@ -23,7 +24,8 @@ namespace pbrt
 		sampler(sampler),
 		techniques(techniques),
 		pixelBounds(pixelBounds),
-		strict(strict)
+		strict(strict),
+		_seed(seed)
 	{}
 
 	PathOptiIntegrator::~PathOptiIntegrator()
@@ -93,6 +95,8 @@ namespace pbrt
 
 		Film& film = *camera->film;
 
+		const size_t image_seed = size_t(nTiles.x * nTiles.y) * size_t(sampler->samplesPerPixel) * this->_seed;
+
 		ParallelFor2D([&](Point2i tile) {
 			// Render section of image corresponding to _tile_
 
@@ -100,7 +104,7 @@ namespace pbrt
 			MemoryArena arena;
 
 			// Get sampler instance for tile
-			int seed = tile.y * nTiles.x + tile.x;
+			int seed = tile.y * nTiles.x + tile.x + image_seed;
 			std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
 
 			// Compute sample bounds for tile
@@ -442,6 +446,8 @@ namespace pbrt
 
 		bool strict = params.FindOneBool("strict", true);
 
-		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy, strict); 
+		size_t seed = params.FindOneInt("seed", 0);
+		
+		return new PathOptiIntegrator(maxDepth, camera, sampler, pixelBounds, h, techs, lightStrategy, strict, seed); 
 	}
 }
