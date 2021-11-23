@@ -36,7 +36,7 @@ scenes = [
 	#['./scenes/cornell-large-light.pbrt', 'cornell-large'],
 	#['./scenes/cornell-small-light.pbrt', 'cornell-small'],
 	#['./scenes/box-sphere-light.pbrt', 'box-sphere-light'],
-	[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
+	#[pbrt_scenes_folder + 'cornell-box/scene.pbrt', 'cornell'],
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/bidir.pbrt', 'veach-bidir'],
@@ -56,9 +56,11 @@ scenes = [
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'staircase/scene - Copy.pbrt', 'staircase - Copy'],
+	#[pbrt_scenes_folder + 'staircase/scene_candles.pbrt', 'staircase_candles'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
+	#[pbrt_scenes_folder + 'bathroom/bathroom - Copy.pbrt', 'bathroom - Copy'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
-	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
+	[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
@@ -77,15 +79,15 @@ exec_filters = [
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	('obdpt', 'balance',),
+	#('obdpt', 'balance',),
 	#('obdpt', 'balance', 'spatial'),
 	#('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
-	#('obdpt', 'direct', 'strict'),	
-	#('obdpt', 'direct', 'loose'),	
-	('obdpt', 'direct'),	
+	('obdpt', 'direct', 'strict'),	
+	('obdpt', 'direct', 'loose'),	
+	#('obdpt', 'direct'),	
 	#('obdpt', 'direct', 'spatial'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
@@ -123,7 +125,7 @@ exec_filters = [
 	#('opath', 'direct', [('spatial-Li', 1), ('uniform-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('uniform-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('spatial-Li', 1), ], 'strict'),
-	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ]),
+	#('opath', 'balance', [('spatial-Li', 1), ('uniform-Li', 1), ], 'loose'),
 	#('opath', 'power', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'maximum', [('spatial-Li', 1), ('uniform-Li', 1), ]),
@@ -143,13 +145,16 @@ exec_filters = [
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ('spatial-Li', 1) ]),
 	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ], 'strict'),
+	# ('opath', 'direct', [('BSDF', 1), ('spatial-SS', 1), ('uniform-Li', 1), ], 'strict'),
+	#('opath', 'direct', [('BSDF', 1), ('spatial-SS', 1), ('uniform-Li', 1), ], 'loose'),
+	#('opath', 'balance', [('BSDF', 1), ('spatial-SS', 1), ('uniform-Li', 1), ], 'loose'),
 ]
 
 
 # Select your min and max lengths 
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
@@ -167,12 +172,20 @@ min_max= [
 	#(2, 17),
 	#(2, 18),
 	#(2, 19),
+	(2, 7, 5),
+	#(2, 22, 4),
 	#(2, 22, 5),
+	#(2, 22, 6),
 	#(3, 3),
 	#(4, 4),
 	#(5, 5),
 	#(6, 6),
 	#(7, 7),
+	#(8, 8),
+	#(9, 9),
+	#(10, 10),
+	#(11, 15),
+	#(15, 20),
 	#(5, 10),
 	#(10, 10),
 	#(22, 22)
@@ -186,7 +199,7 @@ numbers_of_samples = [
 	#4,
 	#8, 
 	16,
-	#23,
+	#22,
 	#32, 
 	#64, 
 	#128, 
@@ -215,7 +228,7 @@ samplers = [
 	#'morton',
 ]
 
-postfix = '_f64'
+postfix = ''
 
 def main(args, i=None):
 

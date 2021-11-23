@@ -162,6 +162,7 @@ namespace pbrt
 				} while (tileSampler->StartNextSample());
 				L /= Float(sampler->samplesPerPixel);
 
+				//if(pixel == Point2i(145, 1223))
 				//{
 				//	using Linear_System = MIS::LinearSystem<Float>;
 				//	const auto printSystem = [&](Linear_System const& system)
@@ -171,7 +172,8 @@ namespace pbrt
 				//		std::cout << "Alphas: \n" << system.alphas << "\n";
 				//	};
 				//	using Direct_Estimator = MIS::DirectEstimator<Spectrum, Float>;
-				//	Direct_Estimator* d = dynamic_cast<Direct_Estimator*>(estimators[0]);	
+				//	Direct_Estimator* d = dynamic_cast<Direct_Estimator*>(estimators[0]);
+				//	printSystem(d->getLinearSystem(sampler->samplesPerPixel));
 				//}
 
 				// Get the estimators estimations

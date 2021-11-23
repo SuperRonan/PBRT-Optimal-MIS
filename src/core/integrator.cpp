@@ -240,6 +240,9 @@ void SamplerIntegrator::Render(const Scene &scene) {
     const int tileSize = 16;
     Point2i nTiles((sampleExtent.x + tileSize - 1) / tileSize,
                    (sampleExtent.y + tileSize - 1) / tileSize);
+
+    const size_t image_seed = size_t(nTiles.x * nTiles.y) * size_t(sampler->samplesPerPixel) * this->_seed;
+
     ProgressReporter reporter(nTiles.x * nTiles.y, "Rendering");
     {
         ParallelFor2D([&](Point2i tile) {
@@ -249,7 +252,7 @@ void SamplerIntegrator::Render(const Scene &scene) {
             MemoryArena arena;
 
             // Get sampler instance for tile
-            int seed = tile.y * nTiles.x + tile.x;
+            int seed = tile.y * nTiles.x + tile.x + image_seed;
             std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
 
             // Compute sample bounds for tile

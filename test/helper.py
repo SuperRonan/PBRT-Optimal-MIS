@@ -97,9 +97,13 @@ def techniques_name(techniques):
 		res += tech_str
 	return res
 
+def extract_extra_options(options):
+	return options[2:]
+
 def integrator_str(options, min_depth, max_depth, max_opti_depth):
-	estimation_strat = extract_estimation_strategy(options)
-	light_strategy = extract_light_strategy(options)
+	extra_options = extract_extra_options(options)
+	estimation_strat = extract_estimation_strategy(extra_options)
+	light_strategy = extract_light_strategy(extra_options)
 	res = integrator_string(options[0], min_depth, max_depth, options[1], max_opti_depth, estimation_strat, light_strategy)
 	if options[0] == 'opath' and len(options) >= 3:
 		techniques = options[2]
@@ -114,10 +118,11 @@ def filter_name(options, max_opti_depth, sampler):
 		res += techniques_name(options[2]) 
 	if max_opti_depth is not None:
 		res += "_mo%d" % max_opti_depth
-	light_strategy = extract_light_strategy(options)
+	extra_options = extract_extra_options(options)
+	light_strategy = extract_light_strategy(extra_options)
 	if light_strategy is not None:
 		res += '_' + light_strategy
-	estimation_strat = extract_estimation_strategy(options)
+	estimation_strat = extract_estimation_strategy(extra_options)
 	if estimation_strat is not None:
 		res += '_' + estimation_strat
 	if sampler != 'random':

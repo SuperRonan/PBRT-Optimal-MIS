@@ -50,8 +50,8 @@ PathIntegrator::PathIntegrator(int maxDepth,
                                std::shared_ptr<const Camera> camera,
                                std::shared_ptr<Sampler> sampler,
                                const Bounds2i &pixelBounds, Float rrThreshold,
-                               const std::string &lightSampleStrategy)
-    : SamplerIntegrator(camera, sampler, pixelBounds),
+                               const std::string &lightSampleStrategy, size_t seed)
+    : SamplerIntegrator(camera, sampler, pixelBounds, seed),
       maxDepth(maxDepth),
       rrThreshold(rrThreshold),
       lightSampleStrategy(lightSampleStrategy) {}
@@ -208,8 +208,9 @@ PathIntegrator *CreatePathIntegrator(const ParamSet &params,
     Float rrThreshold = params.FindOneFloat("rrthreshold", 1.);
     std::string lightStrategy =
         params.FindOneString("lightsamplestrategy", "spatial");
+    size_t seed = params.FindOneInt("seed", 0);
     return new PathIntegrator(maxDepth, camera, sampler, pixelBounds,
-                              rrThreshold, lightStrategy);
+                              rrThreshold, lightStrategy, seed);
 }
 
 }  // namespace pbrt
