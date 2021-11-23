@@ -130,3 +130,6 @@ in the list of configuration variables; set them as desired before choosing
 
 With command-line cmake, their values can be specified when you cmake via
 `-DPBRT_FLOAT_AS_DOUBLE=1`, for example.
+
+### Optimal MIS ###
+
