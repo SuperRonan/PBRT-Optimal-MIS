@@ -133,3 +133,18 @@ With command-line cmake, their values can be specified when you cmake via
 
 ### Optimal MIS ###
 
+Integrators
+-----------
+
+We provide two (2) new integrators that use our [Optimal MIS library](https://github.com/SuperRonan/Optimal-MIS):
+- `opath`, implemented by `PathOptiIntegrator` in `src/integrators/path_opti`. This integrator can use multiple light sampling techniques and combine them in an MIS estimator. 
+- `obdpt`, implemented by `OBDPTIntegrator` in `src/integrators/bdpt_opti`. All the techniques of the BDPT are combined in an MIS estimator. 
+
+Run scripts
+-----------
+
+We also provide python scripts in the `test/` folder to easily lauch the engine with different parameters (no need to manually modify the pbrt scene files). 
+Use `runtest.py` to launch the engine with different scenes, integrator, integrator options, path length, number of samples, sampler. 
+Modify the corresponding lists in the file to select the parameters. All the options are well commented. The script does not take any input arguments.
+Any standard pbrt scene file should be working.
+The generated results will placed under `test/results/scene_name_s(number_of_samples)_L(max length)_l(min length)/integrator_name(+extra options).exr`.

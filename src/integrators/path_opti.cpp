@@ -399,8 +399,8 @@ namespace pbrt
 			{"uniform-", "uniform"},
 			{"power-", "power"}, 
 			{"spatial-", "spatial"}, 
-			{"NSP-", "NSP"}, 
-			{"NSS-", "NSS"}, 
+			{"NSP-", "NSP"}, // Not Strongest Power
+			{"NSS-", "NSS"}, // Not Strongest Spatial
 			{"", lightStrategy}, 
 		};
 

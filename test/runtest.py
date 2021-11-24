@@ -13,7 +13,7 @@ num_threads = 16
 
 
 # Select your scene
-#path of the .pbrt file, name of the scene
+#(path to the .pbrt file, name of the scene)
 scenes = [
 	#['./scenes/simple-env.pbrt', 'simple-env'], # this scene contains an environment map
 	#['./scenes/simple-area.pbrt', 'simple-area'],
@@ -73,7 +73,22 @@ scenes = [
 ]
 
 # Select your integrator
-# options: (name, heuristic, extra)
+# options: (Integrator name, heuristic, extra)
+# extra:
+# 	- for 'obdpt': 
+# 		- 'loose' or 'strict', Estimation strategy. 'loose' by default.
+# 		- 'uniform', 'power' or 'spatial': light selection strategy. 'power' by default.
+#	- for 'opath':
+#		- 'loose' or 'strict', Estimation strategy. 'strict' by default.
+#		- 'uniform', 'power' or 'spatial': default light selection strategy. 'power' by default.
+#		- list of technique descriptions. A technique descriptor is (technique_name, sampler_per_technique). This list must be the third element of the tuple. 
+#		Avaiable techniques: 
+# 			- Splatting techniques: 'BSDF' 
+# 			- Gathering techniques: 'Li' (Sample_Li), 'PP' (parallel precise), 'SP' (spherical precise), 'SS' (spherical simple)
+#				By default, gathering techniques will use the integrator light selection strategy, but it can also be included in the technique_name:
+#					light_selection_strategy + '-' gathering_technique_name. e.g. 'spatial-Li': spatial light selection then Li light sampling.
+#					light_selection_strategy can be: 'uniform', 'power', 'spatial', 'NSP' (Not Strongest Power), 'NSS' (Not Strongest Spatial).
+# 					Not Strongest 'strat': build a distribution of 'strat', then exclude the strongest light from it (biased and very defensive, NoMax in the original publication)
 exec_filters = [
 	#('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
@@ -110,7 +125,7 @@ exec_filters = [
 	#('opath', 'direct', [('SS', 1), ("SP", 1), ("Li", 1)]),
 	#('opath', 'direct', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
 	#('opath', 'balance', [('SP', 1), ("PP", 1), ("Li", 1), ('BSDF', 1)]),
-	#('opath', 'direct', [('ower-SP', 1), ('PP', 1), ('BSDF', 1)]),
+	#('opath', 'direct', [('power-SP', 1), ('PP', 1), ('BSDF', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)]),
 	#('opath', 'direct', [('SP', 1), ('PP', 1)], 'strict'),
 	#('opath', 'progressive', [('SP', 1), ('PP', 1)]),
@@ -151,7 +166,10 @@ exec_filters = [
 ]
 
 
-# Select your min and max lengths 
+# Select your min and max lengths (both included) (path length = number of vertices in the path)
+# max_opti (optional): the max (included) length up to which the estimator's heuristic is used, after that: fallback to balance
+# If max_opti is not set, max_length is used.
+# (min, max, max_opti)
 min_max= [
 	#(2, 2),
 	#(2, 3),
@@ -191,7 +209,7 @@ min_max= [
 	#(22, 22)
 ]
 
-# Select your number of samples (or passes to be more accurate)
+# Select your number of samples per pixel (or passes/iterations to be more accurate)
 numbers_of_samples = [
 	#1,
 	#2,
@@ -215,6 +233,7 @@ numbers_of_samples = [
 	#131072,
 ]
 
+# Select your sampler(s)
 samplers = [
 	'random',
 	#'stratified',
@@ -228,6 +247,7 @@ samplers = [
 	#'morton',
 ]
 
+# append this constant postfix to the end of the name of the generated results
 postfix = ''
 
 def main(args, i=None):
