@@ -56,9 +56,9 @@ scenes = [
 	#[pbrt_scenes_folder + 'staircase2/scene.pbrt', 'staircase2'],
 	#[pbrt_scenes_folder + 'staircase/scene.pbrt', 'staircase'],
 	#[pbrt_scenes_folder + 'bathroom/bathroom.pbrt', 'bathroom'],
-	#[pbrt_scenes_folder + 'bathroom/bathroom - Copy.pbrt', 'bathroom - Copy'],
+	[pbrt_scenes_folder + 'bathroom/bathroom - Copy.pbrt', 'bathroom - Copy'],
 	#[pbrt_scenes_folder + 'contemporary-bathroom/contemporary-bathroom.pbrt', 'contemporary-bathroom'],
-	[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
+	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan.pbrt', 'bike'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan2.pbrt', 'bike2'],
 	#[pbrt_scenes_folder + 'chopper-titan/chopper-titan3.pbrt', 'bike3'],
 	#[pbrt_scenes_folder + 'sanmiguel/sanmiguel.pbrt', 'sanmiguel'],
@@ -72,9 +72,9 @@ scenes = [
 # options: (name, heuristic, extra)
 exec_filters = [
 	#('path', ''),
-	#('obdpt', 'balance')
+	('obdpt', 'balance')
 	#('obdpt', 'direct', 'conservative'),	
-	('obdpt', 'direct'),	
+	#('obdpt', 'direct'),	
 
 
 	#('opath', 'direct', [('SS', 1), ('PP', 1)]),
@@ -85,11 +85,11 @@ exec_filters = [
 min_max= [
 	#(2, 2),
 	#(2, 3),
-	#(2, 4),
+	(2, 4),
 	#(2, 5),
 	#(2, 6),
 	#(2, 7),
-	(2, 7, 5),
+	#(2, 7, 5),
 	#(2, 8),
 	#(2, 9),
 	#(2, 10),
@@ -121,13 +121,13 @@ numbers_of_samples = [
 	#3,
 	#4,
 	#8, 
-	16,
+	#16,
 	#32, 
 	#64, 
 	#128, 
 	#256, 
 	#512, 
-	#1024,
+	1024,
 	#2048,
 	#4096,
 	#8192,
@@ -137,7 +137,7 @@ numbers_of_samples = [
 	#131072,
 ]
 
-iterations_range = range(11, 16)
+iterations_range = range(15, 16)
 
 samplers = [
 	'random',

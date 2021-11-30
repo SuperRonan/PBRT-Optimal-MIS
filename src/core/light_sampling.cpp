@@ -37,7 +37,7 @@ namespace pbrt
 	void LightSelector::init(Scene const& scene, std::vector<std::shared_ptr<Light>> const& lights)
 	{
 		this->lights = lights;
-		distribution = CreateLightSampleDistribution(strategy, scene);
+		distribution = CreateLightSampleDistribution(strategy, scene, lights);
 		for (size_t i = 0; i < lights.size(); ++i)
 		{
 			light_to_index[lights[i].get()] = i;
