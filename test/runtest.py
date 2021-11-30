@@ -25,7 +25,7 @@ scenes = [
 	#['./scenes/box-caustic-empty.pbrt', 'box-caustic-empty'], # an open cornel box with a glass sphere
 	#['./scenes/empty-box.pbrt', 'empty-box'],# an empty cornell box with the full ceiling as a light
 	#['./scenes/test-mat/test-mat.pbrt', 'test-mat'],
-	#['./scenes/veach-mis.pbrt', 'veach-mis'],
+	['./scenes/veach-mis.pbrt', 'veach-mis'],
 	#['./scenes/veach-mis-phong.pbrt', 'veach-mis-phong'],
 	#['./scenes/box-three-lights.pbrt', 'box-three-lights'],
 	#['./scenes/cornell-window.pbrt', 'cornell-window'],
@@ -67,7 +67,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'living-room/scene.pbrt', 'living-room'],
 	#[pbrt_scenes_folder + '2019/staircase1/scene/staircase1.pbrt', 'staircase_1_2019'],
 	#[pbrt_scenes_folder + '2019/staircase2/scene/staircase2.pbrt', 'staircase_2_2019'],
-	[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
+	#[pbrt_scenes_folder + '2019/dining-room/scene/dining-room.pbrt', 'dining-room_2019'],
 	#[pbrt_scenes_folder + '2019/veach/scene/veach.pbrt', 'veach_2019'], # Somehow corrupted and makes PBRT crash (precision errors or something)
 	#['./scenes/glossy_env/scene.pbrt', 'glossy_env'],
 ]
@@ -89,6 +89,8 @@ scenes = [
 #					light_selection_strategy + '-' gathering_technique_name. e.g. 'spatial-Li': spatial light selection then Li light sampling.
 #					light_selection_strategy can be: 'uniform', 'power', 'spatial', 'NSP' (Not Strongest Power), 'NSS' (Not Strongest Spatial).
 # 					Not Strongest 'strat': build a distribution of 'strat', then exclude the strongest light from it (biased and very defensive, NoMax in the original publication)
+#				'SS', 'SP' and 'PP' technique may fail to produce samples in certain visibility / angle settings. This is not a problem (it automatically produces a zero contribution sample), but these samples are wasted.
+# 				You can specify to fallback on Li for these cases with '-Li' ('SS-Li', 'SP-Li' and 'PP-Li') and not waste these samples.  
 exec_filters = [
 	#('path', ''),
 	#("light", ''),			# light tracer (to reimplement)
@@ -146,9 +148,9 @@ exec_filters = [
 	#('opath', 'cutoff', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'maximum', [('spatial-Li', 1), ('uniform-Li', 1), ]),
 	#('opath', 'direct', [('Li', 1), ('SP', 1), ], 'strict'),
-	('opath', 'balance', [('SP', 1), ('PP-Li', 1), ], 'loose'),
-	('opath', 'direct', [('SP', 1), ('PP-Li', 1), ], 'loose'),
-	('opath', 'direct', [('SP', 1), ('PP-Li', 1), ], 'strict'),
+	#('opath', 'balance', [('SP', 1), ('PP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('SP', 1), ('PP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('SP', 1), ('PP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('PP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('PP', 1), ], 'strict'),
 	#('opath', 'direct', [('Li', 1), ], 'strict'),
@@ -158,7 +160,12 @@ exec_filters = [
 	#('opath', 'balance', [('uniform-Li', 1), ]),
 	#('opath', 'balance', [('spatial-Li', 1), ]),
 	#('opath', 'balance', [('BSDF', 1), ]),
-	#('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
+	#('opath', 'balance', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'strict'),
+	('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ('spatial-Li', 1) ]),
