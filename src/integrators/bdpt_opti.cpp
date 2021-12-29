@@ -199,7 +199,7 @@ namespace pbrt {
         const int nXTiles = (sampleExtent.x + tileSize - 1) / tileSize;
         const int nYTiles = (sampleExtent.y + tileSize - 1) / tileSize;
 
-        const size_t image_seed = size_t(nXTiles * nYTiles) * size_t(sampler->samplesPerPixel) * this->seed;
+        const size_t image_seed = size_t(film->fullResolution.x * film->fullResolution.y) * size_t(sampler->samplesPerPixel) * this->seed;
 
         // Render and write the output image to disk
         if (scene.lights.size() > 0) {
@@ -223,8 +223,7 @@ namespace pbrt {
                 ParallelFor2D([&](const Point2i tile) {
                     // Render a single tile using BDPT
                     MemoryArena arena;
-                    int seed = tile.y * nXTiles + tile.x + image_seed;
-                    std::unique_ptr<Sampler> tileSampler = sampler->Clone(seed);
+                    
                     int x0 = sampleBounds.pMin.x + tile.x * tileSize;
                     int x1 = std::min(x0 + tileSize, sampleBounds.pMax.x);
                     int y0 = sampleBounds.pMin.y + tile.y * tileSize;
@@ -236,12 +235,14 @@ namespace pbrt {
                         camera->film->GetFilmTile(tileBounds);
 
                     for (Point2i pPixel : tileBounds) {
-                        tileSampler->StartPixel(pPixel);
+                        size_t pixel_seed = image_seed + film->fullResolution.x * pPixel.y + pPixel.x;
+                        std::unique_ptr<Sampler> pixel_sampler = sampler->Clone(pixel_seed);
+                        pixel_sampler->StartPixel(pPixel);
                         if (!InsideExclusive(pPixel, pixelBounds))
                             continue;
                         do {
                             // Generate a single sample using BDPT
-                            Point2f pFilm = (Point2f)pPixel + tileSampler->Get2D();
+                            Point2f pFilm = (Point2f)pPixel + pixel_sampler->Get2D();
 
                             // Trace the camera subpath
                             Vertex* cameraVertices = arena.Alloc<Vertex>(maxDepth + 2);
@@ -261,11 +262,11 @@ namespace pbrt {
 
 #ifndef UBDPT
                             int nCamera = GenerateCameraSubpath(
-                                scene, *tileSampler, arena, maxDepth + 2, *camera,
+                                scene, *pixel_sampler, arena, maxDepth + 2, *camera,
                                 pFilm, cameraVertices);
                             // Now trace the light subpath
                             int nLight = GenerateLightSubpath(
-                                scene, *tileSampler, arena, maxDepth + 1,
+                                scene, *pixel_sampler, arena, maxDepth + 1,
                                 cameraVertices[0].time(), *lightDistr, lightToIndex,
                                 lightVertices);
 #else
@@ -303,7 +304,7 @@ namespace pbrt {
                                     if (fallBackBalance)
                                     {
                                         estimate = ConnectBDPT(scene, lightVertices, cameraVertices, s, t,
-                                            *lightDistr, lightToIndex, *camera, *tileSampler,
+                                            *lightDistr, lightToIndex, *camera, *pixel_sampler,
                                             &pFilmNew);
                                         ++totalPaths;
                                         if (estimate.IsBlack()) ++zeroRadiancePaths;
@@ -321,12 +322,12 @@ namespace pbrt {
                                         if(strict)
                                             estimate = ConnectOBDPT<true>(
                                                 scene, lightVertices, cameraVertices, s, t,
-                                                *lightDistr, lightToIndex, *camera, *tileSampler,
+                                                *lightDistr, lightToIndex, *camera, *pixel_sampler,
                                                 &pFilmNew, balanceWeights, sampleProp);
                                         else
                                             estimate = ConnectOBDPT<false>(
                                                 scene, lightVertices, cameraVertices, s, t,
-                                                *lightDistr, lightToIndex, *camera, *tileSampler,
+                                                *lightDistr, lightToIndex, *camera, *pixel_sampler,
                                                 &pFilmNew, balanceWeights, sampleProp);
                                         if (sampleProp != SampleProperty::SINGULAR_ZERO)
                                         {
@@ -355,7 +356,7 @@ namespace pbrt {
                             //    ", (y: " << L.y() << ")";
                             filmTile->AddSample(pFilm, L);
                             arena.Reset();
-                        } while (tileSampler->StartNextSample());
+                        } while (pixel_sampler->StartNextSample());
                     }
                     film->MergeFilmTile(std::move(filmTile));
                     reporter.Update();

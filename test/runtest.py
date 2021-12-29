@@ -25,7 +25,7 @@ scenes = [
 	#['./scenes/box-caustic-empty.pbrt', 'box-caustic-empty'], # an open cornel box with a glass sphere
 	#['./scenes/empty-box.pbrt', 'empty-box'],# an empty cornell box with the full ceiling as a light
 	#['./scenes/test-mat/test-mat.pbrt', 'test-mat'],
-	['./scenes/veach-mis.pbrt', 'veach-mis'],
+	#['./scenes/veach-mis.pbrt', 'veach-mis'],
 	#['./scenes/veach-mis-phong.pbrt', 'veach-mis-phong'],
 	#['./scenes/box-three-lights.pbrt', 'box-three-lights'],
 	#['./scenes/cornell-window.pbrt', 'cornell-window'],
@@ -40,7 +40,7 @@ scenes = [
 	#[pbrt_scenes_folder + 'water-caustic/scene.pbrt', 'water-caustic'],
 	#[pbrt_scenes_folder + 'veach-mis/scene.pbrt', 'veach-mis'],
 	#[pbrt_scenes_folder + 'veach-bidir/bidir.pbrt', 'veach-bidir'],
-	#[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
+	[pbrt_scenes_folder + 'caustic-glass/glass.pbrt', 'caustic-glass'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-night.pbrt', 'pavilion-night'],
 	#[pbrt_scenes_folder + 'barcelona-pavilion/pavilion-day.pbrt', 'pavilion-day'],
 	#[pbrt_scenes_folder + 'breakfast/breakfast.pbrt', 'breakfast'],
@@ -96,15 +96,15 @@ exec_filters = [
 	#("light", ''),			# light tracer (to reimplement)
 	#('bdpt', ''),
 
-	#('obdpt', 'balance',),
+	('obdpt', 'balance',),
 	#('obdpt', 'balance', 'spatial'),
-	#('obdpt', 'power'),	
+	('obdpt', 'power'),	
 	#('obdpt', 'cutoff'),	
 	#('obdpt', 'maximum'),
 	#('obdpt', 'naive'),	
 	#('obdpt', 'direct', 'strict'),	
 	#('obdpt', 'direct', 'loose'),	
-	#('obdpt', 'direct'),	
+	('obdpt', 'direct'),	
 	#('obdpt', 'direct', 'spatial'),	
 
 	#('opath', 'balance', [('BSDF', 1), ("Li", 1)]),
@@ -163,9 +163,9 @@ exec_filters = [
 	#('opath', 'balance', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'loose'),
 	#('opath', 'direct', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'loose'),
 	#('opath', 'direct', [('BSDF', 1), ('power-Li', 1), ('NSP-Li', 1), ], 'strict'),
-	('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
-	('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
-	('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
+	#('opath', 'balance', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'loose'),
+	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ]),
 	#('opath', 'direct', [('BSDF', 1), ('spatial-Li', 1), ('NSP-Li', 1), ], 'strict'),
 	#('opath', 'direct', [('BSDF', 1), ('uniform-Li', 1), ('power-Li', 1), ('spatial-Li', 1) ]),
@@ -185,7 +185,7 @@ exec_filters = [
 # (min, max, max_opti)
 min_max= [
 	#(2, 2),
-	(2, 3),
+	#(2, 3),
 	#(2, 4),
 	#(2, 5),
 	#(2, 6),
@@ -205,7 +205,7 @@ min_max= [
 	#(2, 19),
 	#(2, 7, 5),
 	#(2, 22, 4),
-	#(2, 22, 5),
+	(2, 22, 6),
 	#(2, 22, 6),
 	#(3, 3),
 	#(4, 4),
