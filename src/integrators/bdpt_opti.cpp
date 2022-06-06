@@ -215,7 +215,7 @@ namespace pbrt {
                 eci.heuristic = heuristic;
                 eci.N = N;
                 estimators.emplace_back(MIS::createImageEstimator<Spectrum, Float, USE_ROW_MAJOR>(width, height, eci));
-                estimators.back()->setSampleForTechnique(N - 1, width * height);
+                estimators.back()->setSamplesForTechnique(N - 1, width * height);
             }
             {
                 ProgressReporter reporter(nXTiles * nYTiles, "Drawing Samples");

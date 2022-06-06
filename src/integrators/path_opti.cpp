@@ -59,7 +59,7 @@ namespace pbrt
 					estimator = MIS::createEstimator<Spectrum, Float>(eci); 
 					for (int i = 0; i < N; ++i)
 					{
-						estimator->setSampleForTechnique(i, techniques[i].n);
+						estimator->setSamplesForTechnique(i, techniques[i].n);
 					}
 				}
 			}, threads);
